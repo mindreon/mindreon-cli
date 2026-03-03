@@ -30,3 +30,12 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Local symlinked services
+ai-nexus
+dataset-service
+falsework
+file-service
+iam-service
+model-service
+zentao-mcp
