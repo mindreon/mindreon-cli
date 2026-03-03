@@ -12,6 +12,20 @@
     "skills",
     "README.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mindreon/mindreon-mcp"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "release": "node src/index.js release",
+    "release:patch": "node src/index.js release patch",
+    "release:minor": "node src/index.js release minor",
+    "release:major": "node src/index.js release major"
+  },
   "engines": {
     "node": ">=18"
   },

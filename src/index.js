@@ -7,6 +7,7 @@ import { runFile } from "./commands/file.js";
 import { runDataset } from "./commands/dataset.js";
 import { runModel } from "./commands/model.js";
 import { runWorkload } from "./commands/workload.js";
+import { runRelease } from "./commands/release.js";
 
 const argv = process.argv.slice(2);
 const { command, argv: argvWithoutCommand } = extractCommand(argv);
@@ -18,7 +19,12 @@ function exitWithError(error) {
 }
 
 try {
-    if (!command || hasHelpFlag(argv)) {
+    if (!command && hasHelpFlag(argv)) {
+        printRootHelp();
+        process.exit(0);
+    }
+
+    if (!command) {
         printRootHelp();
         process.exit(0);
     }
@@ -45,6 +51,11 @@ try {
 
     if (command === "workload") {
         await runWorkload({ argv: argvWithoutCommand, env: process.env });
+        process.exit(0);
+    }
+
+    if (command === "release") {
+        await runRelease({ argv: argvWithoutCommand, env: process.env });
         process.exit(0);
     }
 
