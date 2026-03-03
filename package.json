@@ -1,0 +1,19 @@
+{
+  "name": "@sanmu2018/mindreon-mcp",
+  "version": "0.1.0",
+  "description": "Mindreon CLI for AI Agent MCP workflows",
+  "type": "module",
+  "bin": {
+    "mindreon": "src/index.js",
+    "mindreon-mcp": "src/index.js"
+  },
+  "files": [
+    "src",
+    "skills",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}
