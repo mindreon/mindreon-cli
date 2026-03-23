@@ -9,3 +9,6 @@ file-service
 iam-service
 model-service
 zentao-mcp
+tmp/
+.tmp/
+.idea

@@ -1,19 +1,22 @@
 import { loadConfig } from "../cli/config.js";
+import { normalizeResolvedBaseUrl } from "../utils/routes.js";
 
-function getBaseUrl() {
-    return process.env.MINDREON_API_URL || "https://dev-4-13.mindreon.com";
+const DEFAULT_BASE_URL = "https://dev-4-13.mindreon.com";
+
+export function resolveBaseUrl(config = {}) {
+    return normalizeResolvedBaseUrl(process.env.MINDREON_API_URL || config.url || DEFAULT_BASE_URL);
 }
 
 export async function request(endpoint, options = {}) {
     const method = options.method || "GET";
     const body = options.body ? JSON.stringify(options.body) : undefined;
+    const config = await loadConfig();
 
     const headers = new Headers();
     headers.set("Content-Type", "application/json");
 
     // Load auth token if available unless explicitly disabled
     if (!options.skipAuth) {
-        const config = await loadConfig();
         if (config.token) {
             headers.set("Authorization", `Bearer ${config.token}`);
         }
@@ -25,7 +28,7 @@ export async function request(endpoint, options = {}) {
         }
     }
 
-    const baseUrl = getBaseUrl();
+    const baseUrl = resolveBaseUrl(config);
     const url = `${baseUrl}${endpoint}`;
 
     const fetchOptions = {

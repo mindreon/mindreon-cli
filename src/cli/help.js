@@ -10,9 +10,11 @@ Usage:
 
 Commands:
   login         Authenticate with Mindreon IAM service
+  install       Install or verify git, git-lfs, and dvc[s3]
   file          File uploading and management (TUS protocol)
   dataset       Dataset and dataset version management
   model         Model and model version management
+  repo          Local Git/DVC workspace operations
   workload      Create and manage training, dev, or inference workloads
   release       Cut new version, build, and publish to NPM registry
   help          Show this help message
@@ -22,7 +24,9 @@ Options:
 
 Example:
   mindreon-mcp login --username admin --password secret
-  mindreon-mcp dataset create --name example
+  mindreon-mcp model connect --name example-model --version v1
+  mindreon-mcp repo add
+  mindreon-mcp repo add --threshold 5
 `);
 }
 

@@ -1,13 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "../cli/args.js";
-import { request } from "../api/client.js";
+import { resolveBaseUrl } from "../api/client.js";
 import { loadConfig } from "../cli/config.js";
+import { getServicePrefix } from "../utils/routes.js";
 
 // A custom fetch wrapper that gets raw response to read headers
 async function fetchRaw(endpoint, options = {}) {
     const config = await loadConfig();
-    const baseUrl = process.env.MINDREON_API_URL || "https://dev-4-13.mindreon.com";
+    const baseUrl = resolveBaseUrl(config);
 
     const headers = new Headers();
     if (config.token) {
@@ -34,6 +35,8 @@ export async function runFile({ argv }) {
     if (subCommand === "upload") {
         const filePath = args._[1];
         const bucket = args.bucket || args.b || "files";
+        const config = await loadConfig();
+        const filesPrefix = getServicePrefix("files", resolveBaseUrl(config));
 
         if (!filePath) {
             throw new Error("Usage: mindreon-mcp file upload <file_path> [--bucket <bucket>]");
@@ -44,7 +47,7 @@ export async function runFile({ argv }) {
 
         // TUS create
         const metaStr = `filename ${Buffer.from(fileName).toString("base64")}`;
-        const createResp = await fetchRaw(`/file-service/files/uploads/${bucket}/`, {
+        const createResp = await fetchRaw(`${filesPrefix}/uploads/${bucket}/`, {
             method: "POST",
             headers: {
                 "Tus-Resumable": "1.0.0",
@@ -68,9 +71,9 @@ export async function runFile({ argv }) {
             location = urlObj.pathname;
         }
         // ensure prefix
-        if (!location.startsWith("/file-service")) {
-            if (location.startsWith("/files/")) {
-                location = "/file-service" + location;
+        if (!location.startsWith(filesPrefix)) {
+            if (location.startsWith("/uploads/")) {
+                location = `${filesPrefix}${location}`;
             }
         }
 

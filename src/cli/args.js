@@ -25,7 +25,12 @@ export function parseArgs(argv) {
                 args[key] = true;
             }
         } else if (arg.startsWith("-")) {
-            args[arg.slice(1)] = true;
+            const key = arg.slice(1);
+            if (i + 1 < argv.length && !argv[i + 1].startsWith("-")) {
+                args[key] = argv[++i];
+            } else {
+                args[key] = true;
+            }
         } else {
             args._.push(arg);
         }

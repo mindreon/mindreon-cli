@@ -1,5 +1,7 @@
 import { parseArgs } from "../cli/args.js";
-import { request } from "../api/client.js";
+import { request, resolveBaseUrl } from "../api/client.js";
+import { loadConfig } from "../cli/config.js";
+import { getServicePrefix } from "../utils/routes.js";
 
 function parseResource(args) {
     return {
@@ -12,6 +14,7 @@ function parseResource(args) {
 export async function runWorkload({ argv }) {
     const args = parseArgs(argv);
     const subCommand = args._[0];
+    const apiPrefix = getServicePrefix("workload", resolveBaseUrl(await loadConfig()));
 
     if (subCommand === "create-training") {
         const name = args.name;
@@ -34,7 +37,7 @@ export async function runWorkload({ argv }) {
         };
 
         console.log(`Creating training workload: ${name}`);
-        const response = await request("/ai-nexus/api/v1/workloads/train", {
+        const response = await request(`${apiPrefix}/api/v1/workloads/train`, {
             method: "POST",
             body,
         });
@@ -55,7 +58,7 @@ export async function runWorkload({ argv }) {
         };
 
         console.log(`Creating dev workspace: ${name}`);
-        const response = await request("/ai-nexus/api/v1/workloads/dev", {
+        const response = await request(`${apiPrefix}/api/v1/workloads/dev`, {
             method: "POST",
             body,
         });
@@ -78,7 +81,7 @@ export async function runWorkload({ argv }) {
         };
 
         console.log(`Creating infer service: ${name}`);
-        const response = await request("/ai-nexus/api/v1/workloads/infer", {
+        const response = await request(`${apiPrefix}/api/v1/workloads/infer`, {
             method: "POST",
             body,
         });
@@ -91,7 +94,7 @@ export async function runWorkload({ argv }) {
     if (subCommand === "list") {
         const kind = args.kind || "Job";
         console.log(`Listing workloads (kind: ${kind})...`);
-        const response = await request(`/ai-nexus/api/v1/workloads?kind=${kind}`, { method: "GET" });
+        const response = await request(`${apiPrefix}/api/v1/workloads?kind=${kind}`, { method: "GET" });
         console.log(response.data || response);
         return;
     }

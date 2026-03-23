@@ -1,6 +1,7 @@
 import { parseArgs } from "../cli/args.js";
 import { saveConfig, loadConfig } from "../cli/config.js";
-import { request } from "../api/client.js";
+import { request, resolveBaseUrl } from "../api/client.js";
+import { getServicePrefix } from "../utils/routes.js";
 
 export async function runLogin({ argv }) {
     const args = parseArgs(argv);
@@ -31,7 +32,9 @@ export async function runLogin({ argv }) {
 
     console.log(`Logging in as ${username}...`);
 
-    const response = await request("/iam-service/api/v1/auth/login", {
+    const baseUrl = resolveBaseUrl(await loadConfig());
+    const iamPrefix = getServicePrefix("iam", baseUrl);
+    const response = await request(`${iamPrefix}/api/v1/auth/login`, {
         method: "POST",
         skipAuth: true,
         body: {
@@ -42,7 +45,7 @@ export async function runLogin({ argv }) {
 
     if (response && response.data && response.data.accessToken) {
         const token = response.data.accessToken;
-        await saveConfig({ token, username });
+        await saveConfig({ token, username, gitAccessToken: "" });
         console.log(`Successfully logged in as ${username}. Token saved to config.`);
     } else {
         throw new Error("Invalid response format from login API");
