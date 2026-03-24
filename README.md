@@ -29,6 +29,46 @@ mindreon --help
 
 安装后统一使用 `mindreon` 命令。
 
+## Docker 使用
+
+如果你不想在宿主机从零安装依赖，可以直接构建和推送基础镜像：
+
+```bash
+cd /path/to/mindreon-mcp
+make image-build
+make image-run-help
+```
+
+如果要推送镜像：
+
+```bash
+make image-push
+```
+
+容器里已经预装：
+
+- `mindreon`
+- `git`
+- `git-lfs`
+- `python3`
+- `dvc[s3]`
+
+说明：
+
+- 这个镜像本身不强制挂载任何宿主机目录
+- 镜像只提供可直接使用的运行环境
+- 是否挂载工作目录、配置目录、SSH 目录，由最终用户自行决定
+
+例如，用户如果想把当前目录挂进容器并进入 shell，可以自己执行：
+
+```bash
+docker run --rm -it \
+  -v "$PWD":/workspace \
+  -w /workspace \
+  mindreon/mindreon-cli:latest \
+  bash
+```
+
 ## 第一步：安装依赖
 
 执行：
@@ -141,10 +181,7 @@ mindreon repo pull
 
 这一步会做：
 
-- 刷新 Git remote token
-- 同步 Git 元数据
-- 刷新 DVC 临时凭证
-- 执行 `dvc pull`
+- 拉取仓库代码，模型或者数据集文件
 
 ## 第五步：修改文件
 
@@ -154,14 +191,30 @@ mindreon repo pull
 echo "hello" > note.txt
 ```
 
-或者新增一个大文件：
+## 关于 DVC
 
-```bash
-python3 - <<'PY'
-from pathlib import Path
-Path("big.bin").write_bytes(b"a" * (6 * 1024 * 1024))
-PY
-```
+Mindreon CLI 里，`git` 和 `dvc` 分工不同：
+
+- 小文件默认继续由 `git` 管理
+- 大文件默认由 `dvc` 管理
+
+默认规则是：
+
+- 超过 `5 MiB` 的文件，会在 `mindreon repo add` 时自动执行 `dvc add`
+- 这类文件不会直接进入 Git，而是由 DVC 管理真实内容
+
+请特别注意：
+
+- 不要删除任何带 `.dvc` 后缀的文件
+- 这些 `.dvc` 文件是 DVC 对大文件的跟踪标识
+- 它们本身需要提交到 Git
+- 真正的大文件内容由 DVC 和对象存储管理
+
+这样做的原因是：
+
+- 大文件不适合直接放进 Git
+- Git 负责管理代码和元数据
+- DVC 负责管理大文件版本和远端存储
 
 ## 第六步：把修改加入版本控制
 
@@ -175,6 +228,7 @@ mindreon repo add
 
 - 默认超过 `5 MiB` 的文件会自动走 `dvc add`
 - 小文件会正常进入 Git
+- 如果看到新生成的 `.dvc` 文件，请一并提交，不要删除
 - 也可以手动指定阈值：
 
 ```bash
@@ -263,63 +317,3 @@ mindreon repo --help
 mindreon workload create-infer --name "infer-test" --model "my-model" --modelVersion "v1" --cpu 4 --memory "8G" --gpu 1
 mindreon workload create-training --name "train-test" --dataset "my-dataset" --datasetVersion "v1" --pretrainModel "my-model" --pretrainModelVersion "v1" --cpu 4 --memory "16G" --gpu 1
 ```
-
-## 发布到 npm
-
-发布前检查：
-
-```bash
-cd /path/to/mindreon-mcp
-git status --short
-npm whoami
-node -p "require('./package.json').version"
-```
-
-GitHub Actions 发布：
-
-```bash
-cd /path/to/mindreon-mcp
-mindreon release patch --skip-github-release --skip-publish
-```
-
-这条命令会：
-
-- 更新版本号
-- 提交版本变更
-- 创建并推送 `v*` tag
-- 由 `.github/workflows/publish-npm.yml` 在 tag push 时自动发布到 npm
-
-如果不想自动 bump，也可以手动打 tag：
-
-```bash
-git tag v0.1.2
-git push origin v0.1.2
-```
-
-本地手动发布：
-
-```bash
-cd /path/to/mindreon-mcp
-npm run pack
-npm publish --access public
-```
-
-自动发版并发布：
-
-```bash
-cd /path/to/mindreon-mcp
-mindreon release patch
-mindreon release minor
-mindreon release major
-```
-
-说明：
-
-- 上面这组命令是本地发布路径，会继续执行 `gh release create` 和 `npm publish`
-- 如果想只打 tag 交给 GitHub Actions 发布，请加 `--skip-github-release --skip-publish`
-
-版本含义：
-
-- `patch`：小修复，不改现有用法，例如 `0.1.0 -> 0.1.1`
-- `minor`：新增功能但兼容旧用法，例如 `0.1.0 -> 0.2.0`
-- `major`：不兼容变更，例如删命令或改参数语义

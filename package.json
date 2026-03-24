@@ -9,7 +9,8 @@
   "files": [
     "src",
     "skills",
-    "README.md"
+    "README.md",
+    "npm.md"
   ],
   "publishConfig": {
     "access": "public"

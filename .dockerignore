@@ -1,0 +1,15 @@
+.git
+.github
+.idea
+.tmp
+bin
+node_modules
+tmp
+*.tgz
+ai-nexus
+dataset-service
+falsework
+file-service
+iam-service
+model-service
+zentao-mcp
