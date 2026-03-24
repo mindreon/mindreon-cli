@@ -14,6 +14,10 @@ function hasPython3() {
     return commandExists("python3");
 }
 
+function hasPipForPython3() {
+    return tryCommand("python3", ["-m", "pip", "--version"]).status === 0;
+}
+
 function getInstallPrefix() {
     const uid = typeof process.getuid === "function" ? process.getuid() : null;
     if (uid === 0 || process.platform === "darwin") {
@@ -47,35 +51,42 @@ function detectPackageManager() {
     return "";
 }
 
-function printStatus() {
-    const rows = [
+function getStatusRows() {
+    return [
         ["git", commandExists("git")],
         ["git-lfs", hasGitLfs()],
         ["python3", hasPython3()],
+        ["python3-pip", hasPipForPython3()],
         ["dvc", hasDvc()],
     ];
+}
 
-    for (const [name, installed] of rows) {
+function printStatus() {
+    for (const [name, installed] of getStatusRows()) {
         console.log(`${installed ? "OK" : "MISSING"}  ${name}`);
     }
 }
 
-function installSystemPackages(packageManager) {
+function installSystemPackages(packageManager, missingPackages) {
+    if (missingPackages.length === 0) {
+        return;
+    }
+
     if (packageManager === "brew") {
-        runCommand("brew", ["install", "git", "git-lfs", "python3"]);
+        runCommand("brew", ["install", ...missingPackages]);
         return;
     }
     if (packageManager === "apt-get") {
         runMaybeSudo("apt-get", ["update"]);
-        runMaybeSudo("apt-get", ["install", "-y", "git", "git-lfs", "python3", "python3-pip"]);
+        runMaybeSudo("apt-get", ["install", "-y", ...missingPackages]);
         return;
     }
     if (packageManager === "dnf") {
-        runMaybeSudo("dnf", ["install", "-y", "git", "git-lfs", "python3", "python3-pip"]);
+        runMaybeSudo("dnf", ["install", "-y", ...missingPackages]);
         return;
     }
     if (packageManager === "yum") {
-        runMaybeSudo("yum", ["install", "-y", "git", "git-lfs", "python3", "python3-pip"]);
+        runMaybeSudo("yum", ["install", "-y", ...missingPackages]);
         return;
     }
 
@@ -98,17 +109,36 @@ export async function runInstall({ argv }) {
         return;
     }
 
-    const packageManager = detectPackageManager();
-    installSystemPackages(packageManager);
+    const missingSystemPackages = [];
+    if (!commandExists("git")) missingSystemPackages.push("git");
+    if (!hasGitLfs()) missingSystemPackages.push("git-lfs");
+    if (!hasPython3()) missingSystemPackages.push("python3");
+    if (!hasPipForPython3()) missingSystemPackages.push("python3-pip");
+
+    if (missingSystemPackages.length > 0) {
+        console.log(`Installing missing system packages: ${missingSystemPackages.join(", ")}`);
+        const packageManager = detectPackageManager();
+        installSystemPackages(packageManager, missingSystemPackages);
+    } else {
+        console.log("All required system packages are already installed.");
+    }
 
     if (!hasDvc()) {
+        console.log("Installing dvc[s3] with python3 -m pip...");
         installDvc();
+    } else {
+        console.log("dvc is already installed.");
     }
 
     if (!hasGitLfs()) {
         throw new Error("git-lfs is still unavailable after installation.");
     }
 
-    runCommand("git", ["lfs", "install"]);
+    if (commandExists("git")) {
+        runCommand("git", ["lfs", "install"]);
+    }
+
+    console.log("Current dependency status:");
+    printStatus();
     console.log("Dependency installation completed.");
 }

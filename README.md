@@ -60,8 +60,34 @@ mindreon repo push
 ```
 
 说明：
+- `mindreon install` 会检查并安装 `git`、`git-lfs`、`python3`、`python3-pip` 和 `dvc[s3]`
+- 对于已经安装好的依赖，会直接提示已安装并跳过，不会重复安装
 - `repo add` 默认把大于 `5 MiB` 的文件交给 `dvc add`
 - `--threshold` 单位是 `MiB`
+
+手动安装建议：
+
+- macOS
+```bash
+brew install git git-lfs python3
+python3 -m pip install --user "dvc[s3]"
+git lfs install
+```
+
+- Ubuntu / Debian
+```bash
+sudo apt-get update
+sudo apt-get install -y git git-lfs python3 python3-pip
+python3 -m pip install --user "dvc[s3]"
+git lfs install
+```
+
+- RHEL / CentOS / Rocky / AlmaLinux
+```bash
+sudo dnf install -y git git-lfs python3 python3-pip
+python3 -m pip install --user "dvc[s3]"
+git lfs install
+```
 
 ### 任务调度
 
