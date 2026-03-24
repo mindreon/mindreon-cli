@@ -106,8 +106,8 @@ export async function ensureDvcGitignore(cwd) {
     if (!existing.includes(marker)) {
         const prefix = existing.trimEnd();
         const next = prefix
-            ? `${prefix}\n\n# FVC local config (contains credentials)\n${marker}\n`
-            : `# FVC local config (contains credentials)\n${marker}\n`;
+            ? `${prefix}\n\n# Mindreon workspace metadata\n${marker}\n`
+            : `# Mindreon workspace metadata\n${marker}\n`;
         await fs.writeFile(gitignorePath, next, "utf-8");
     }
 }
@@ -134,7 +134,6 @@ export async function ensureDvcConfig(cwd, creds, fvsId) {
         remoteConfig.url = `s3://${bucket}/${prefix}`;
     }
 
-    const cacheType = (process.env.DVC_CACHE_TYPE || "").trim();
     const nextConfig = {
         ...existing,
         core: {
@@ -144,7 +143,7 @@ export async function ensureDvcConfig(cwd, creds, fvsId) {
         },
         cache: {
             ...(existing.cache || {}),
-            type: cacheType || (existing.cache || {}).type || "symlink,copy",
+            type: "copy",
         },
         [remoteSection]: remoteConfig,
     };
@@ -174,10 +173,8 @@ async function writeDvcLocalConfig(cwd, creds) {
 }
 
 export async function saveWorkspaceCredentials(cwd, { fvsId, bindType, bindName, version, creds }) {
-    const fvcConfigPath = path.join(cwd, ".dvc", "fvc_config");
-    const existingFvcConfig = await readIni(fvcConfigPath);
+    const existingFvcConfig = await readWorkspaceConfig(cwd);
     const nextFvcConfig = {
-        ...existingFvcConfig,
         fvc: {
             ...(existingFvcConfig.fvc || {}),
             fvs_id: fvsId,
@@ -185,10 +182,9 @@ export async function saveWorkspaceCredentials(cwd, { fvsId, bindType, bindName,
             bind_name: bindName,
             version: version || (existingFvcConfig.fvc || {}).version || "",
         },
-        'remote "storage"': buildRemoteCredentialSection(existingFvcConfig['remote "storage"'], creds),
     };
 
-    await writeIni(fvcConfigPath, nextFvcConfig);
+    await writeWorkspaceConfig(cwd, nextFvcConfig);
     await writeDvcLocalConfig(cwd, creds);
     await ensureDvcGitignore(cwd);
 }
