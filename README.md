@@ -102,3 +102,36 @@ mindreon workload create-training --name "train-test" --dataset "my-dataset" --d
 mindreon help
 mindreon repo --help
 ```
+
+## 发布到 npm
+
+发布前检查：
+
+```bash
+cd /path/to/mindreon-mcp
+git status --short
+npm whoami
+node -p "require('./package.json').version"
+```
+
+手动发布：
+
+```bash
+cd /path/to/mindreon-mcp
+npm run pack
+npm publish --access public
+```
+
+自动发版并发布：
+
+```bash
+cd /path/to/mindreon-mcp
+npm run release:patch
+npm run release:minor
+npm run release:major
+```
+
+版本含义：
+- `patch`：小修复，不改现有用法，例如 `0.1.0 -> 0.1.1`
+- `minor`：新增功能但兼容旧用法，例如 `0.1.0 -> 0.2.0`
+- `major`：不兼容变更，例如删命令或改参数语义
