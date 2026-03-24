@@ -12,6 +12,12 @@ import { runWorkload } from "./commands/workload.js";
 import { runRelease } from "./commands/release.js";
 
 const argv = process.argv.slice(2);
+
+if (argv.length === 0 || hasHelpFlag(argv)) {
+    printRootHelp();
+    process.exit(0);
+}
+
 const { command, argv: argvWithoutCommand } = extractCommand(argv);
 
 function exitWithError(error) {
@@ -21,11 +27,6 @@ function exitWithError(error) {
 }
 
 try {
-    if (!command && hasHelpFlag(argv)) {
-        printRootHelp();
-        process.exit(0);
-    }
-
     if (!command) {
         printRootHelp();
         process.exit(0);

@@ -73,6 +73,6 @@ mindreon workload create-training --name "train-test" --dataset "my-dataset" --d
 ## 查看帮助
 
 ```bash
-mindreon --help
+mindreon help
 mindreon repo --help
 ```
