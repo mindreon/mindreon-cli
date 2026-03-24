@@ -107,8 +107,7 @@ export async function runRelease({ argv = [], env = process.env } = {}) {
     const dryRun = Boolean(cliArgs["dry-run"]);
     const yes = Boolean(cliArgs.yes);
     const skipPush = Boolean(cliArgs["skip-push"]);
-    // If skip-github-release is defined in args, we respect it, else default to skip-push meaning don't do github release
-    const skipGithubRelease = cliArgs["skip-github-release"] !== undefined ? Boolean(cliArgs["skip-github-release"]) : skipPush;
+    const skipGithubRelease = Boolean(cliArgs["skip-github-release"]);
     const skipPublish = Boolean(cliArgs["skip-publish"]);
 
     if (!new Set(["patch", "minor", "major"]).has(versionType)) {
@@ -129,7 +128,11 @@ export async function runRelease({ argv = [], env = process.env } = {}) {
     const newVersion = readPackageVersion(repoRoot);
     process.stdout.write(`New version: ${newVersion}\n`);
 
-    run("git", ["add", "package.json"], { cwd: repoRoot, env, dryRun });
+    const filesToAdd = ["package.json"];
+    if (fs.existsSync(path.join(repoRoot, "package-lock.json"))) {
+        filesToAdd.push("package-lock.json");
+    }
+    run("git", ["add", ...filesToAdd], { cwd: repoRoot, env, dryRun });
     try {
         run("git", ["commit", "-m", `chore: bump version to ${newVersion}`], { cwd: repoRoot, env, dryRun });
     } catch (error) {

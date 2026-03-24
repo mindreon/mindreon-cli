@@ -112,7 +112,17 @@ npm whoami
 node -p "require('./package.json').version"
 ```
 
-手动发布：
+GitHub Actions 发布：
+
+```bash
+cd /path/to/mindreon-mcp
+git checkout main
+git pull
+```
+
+然后在 GitHub 仓库的 `Actions -> Publish to npm` 中手动触发 workflow。
+
+本地手动发布：
 
 ```bash
 cd /path/to/mindreon-mcp
@@ -124,9 +134,9 @@ npm publish --access public
 
 ```bash
 cd /path/to/mindreon-mcp
-npm run release:patch
-npm run release:minor
-npm run release:major
+mindreon release patch
+mindreon release minor
+mindreon release major
 ```
 
 版本含义：
