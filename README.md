@@ -35,14 +35,26 @@ mindreon --help
 
 ```bash
 cd /path/to/mindreon-cli
-make image-build
+make image-build-local
 make image-run-help
 ```
 
-如果要推送镜像：
+如果要构建并推送当前机器架构的单架构镜像：
 
 ```bash
-make image-push
+make image-build-push IMAGE_NAME=harbor.mindreon.com/mindreon/mindreon-cli IMAGE_TAG=v0.1.0
+```
+
+如果要同时构建 `amd64` 和 `arm64` 多架构镜像并推送：
+
+```bash
+make image-buildx-push IMAGE_NAME=mindreon/mindreon-cli IMAGE_TAG=latest
+```
+
+如果只想在本地测试多架构构建流程，也可以执行：
+
+```bash
+make image-buildx IMAGE_NAME=mindreon/mindreon-cli IMAGE_TAG=dev
 ```
 
 容器里已经预装：
