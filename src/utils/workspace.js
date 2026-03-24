@@ -245,7 +245,8 @@ function remoteBranchExists(cwd, branch) {
 }
 
 function ensureGitRepository(cwd) {
-    if (tryCommand("git", ["rev-parse", "--git-dir"], { cwd }).status === 0) {
+    const localGitDir = path.join(cwd, ".git");
+    if (tryCommand("git", ["rev-parse", "--git-dir"], { cwd }).status === 0 && tryCommand("test", ["-d", localGitDir], { cwd }).status === 0) {
         return;
     }
     runCommand("git", ["init"], { cwd });
