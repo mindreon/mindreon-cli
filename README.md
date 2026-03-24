@@ -62,7 +62,7 @@ make image-push
 例如，用户如果想把当前目录挂进容器并进入 shell，可以自己执行：
 
 ```bash
-docker run --rm -it \
+docker run -it \
   -v "$PWD":/workspace \
   -w /workspace \
   mindreon/mindreon-cli:latest \
