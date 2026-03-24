@@ -3,7 +3,7 @@
 ## 发布前检查
 
 ```bash
-cd /path/to/mindreon-mcp
+cd /path/to/mindreon-cli
 git status --short
 npm whoami
 node -p "require('./package.json').version"
@@ -12,7 +12,7 @@ node -p "require('./package.json').version"
 ## GitHub Actions 发布
 
 ```bash
-cd /path/to/mindreon-mcp
+cd /path/to/mindreon-cli
 mindreon release patch --skip-github-release --skip-publish
 ```
 
@@ -33,7 +33,7 @@ git push origin v0.1.2
 ## 本地手动发布
 
 ```bash
-cd /path/to/mindreon-mcp
+cd /path/to/mindreon-cli
 npm run pack
 npm publish --access public
 ```
@@ -41,7 +41,7 @@ npm publish --access public
 ## 自动发版并发布
 
 ```bash
-cd /path/to/mindreon-mcp
+cd /path/to/mindreon-cli
 mindreon release patch
 mindreon release minor
 mindreon release major

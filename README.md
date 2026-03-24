@@ -15,14 +15,14 @@
 全局安装：
 
 ```bash
-npm i -g @sanmu2018/mindreon-mcp
+npm i -g @sanmu2018/mindreon-cli
 mindreon --help
 ```
 
 从源码本地安装：
 
 ```bash
-cd /path/to/mindreon-mcp
+cd /path/to/mindreon-cli
 npm link
 mindreon --help
 ```
@@ -34,7 +34,7 @@ mindreon --help
 如果你不想在宿主机从零安装依赖，可以直接构建和推送基础镜像：
 
 ```bash
-cd /path/to/mindreon-mcp
+cd /path/to/mindreon-cli
 make image-build
 make image-run-help
 ```

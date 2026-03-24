@@ -2,7 +2,7 @@ import process from "node:process";
 
 export function printRootHelp() {
   process.stdout.write(`
-Mindreon MCP CLI
+Mindreon CLI
 A command-line interface for Mindreon AI platform workflows.
 
 Usage:

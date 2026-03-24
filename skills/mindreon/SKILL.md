@@ -1,8 +1,8 @@
 ---
 name: mindreon
 description: 使用 mindreon 命令行工具，帮助 Agent 直接在本地集成 IAM 登录、管理模型与数据集，以及调度 AI 测试训练工作流。
-homepage: https://github.com/mindreon/mindreon-mcp
-metadata: {"openclaw":{"emoji":"🚀","install":[{"id":"node","kind":"node","package":"@sanmu2018/mindreon-mcp","bins":["mindreon"],"label":"Install mindreon CLI (node)"}]}}
+homepage: https://github.com/mindreon/mindreon-cli
+metadata: {"openclaw":{"emoji":"🚀","install":[{"id":"node","kind":"node","package":"@sanmu2018/mindreon-cli","bins":["mindreon"],"label":"Install mindreon CLI (node)"}]}}
 ---
 
 # mindreon (Mindreon CLI)
@@ -16,7 +16,7 @@ metadata: {"openclaw":{"emoji":"🚀","install":[{"id":"node","kind":"node","pac
 
 ## Installation
 
-可以通过 `npm link` 或 `npm i -g @sanmu2018/mindreon-mcp` 安装全局命令 `mindreon`。
+可以通过 `npm link` 或 `npm i -g @sanmu2018/mindreon-cli` 安装全局命令 `mindreon`。
 
 ## Workflows
 

@@ -1,5 +1,5 @@
 {
-  "name": "@sanmu2018/mindreon-mcp",
+  "name": "@sanmu2018/mindreon-cli",
   "version": "0.1.7",
   "description": "Mindreon CLI for local Git/DVC, model, dataset, and workload workflows",
   "type": "module",
@@ -17,11 +17,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mindreon/mindreon-mcp.git"
+    "url": "git+https://github.com/mindreon/mindreon-cli.git"
   },
-  "homepage": "https://github.com/mindreon/mindreon-mcp#readme",
+  "homepage": "https://github.com/mindreon/mindreon-cli#readme",
   "bugs": {
-    "url": "https://github.com/mindreon/mindreon-mcp/issues"
+    "url": "https://github.com/mindreon/mindreon-cli/issues"
   },
   "keywords": [
     "mindreon",
@@ -30,7 +30,7 @@
     "dvc",
     "model",
     "dataset",
-    "mcp"
+    "ai"
   ],
   "license": "MIT",
   "scripts": {
