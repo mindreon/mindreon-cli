@@ -65,7 +65,7 @@ make image-push
 docker run -it \
   -v "$PWD":/workspace \
   -w /workspace \
-  mindreon/mindreon-cli:latest \
+  harbor.mindreon.com/mindreon/mindreon-cli:v0.1.0 \
   bash
 ```
 
