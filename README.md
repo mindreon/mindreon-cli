@@ -116,11 +116,21 @@ GitHub Actions 发布：
 
 ```bash
 cd /path/to/mindreon-mcp
-git checkout main
-git pull
+mindreon release patch --skip-github-release --skip-publish
 ```
 
-然后在 GitHub 仓库的 `Actions -> Publish to npm` 中手动触发 workflow。
+这条命令会：
+- 更新版本号
+- 提交版本变更
+- 创建并推送 `v*` tag
+- 由 `.github/workflows/publish-npm.yml` 在 tag push 时自动发布到 npm
+
+如果不想自动 bump，也可以手动打 tag：
+
+```bash
+git tag v0.1.2
+git push origin v0.1.2
+```
 
 本地手动发布：
 
@@ -138,6 +148,10 @@ mindreon release patch
 mindreon release minor
 mindreon release major
 ```
+
+说明：
+- 上面这组命令是本地发布路径，会继续执行 `gh release create` 和 `npm publish`
+- 如果想只打 tag 交给 GitHub Actions 发布，请加 `--skip-github-release --skip-publish`
 
 版本含义：
 - `patch`：小修复，不改现有用法，例如 `0.1.0 -> 0.1.1`
