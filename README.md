@@ -157,3 +157,7 @@ mindreon release major
 - `patch`：小修复，不改现有用法，例如 `0.1.0 -> 0.1.1`
 - `minor`：新增功能但兼容旧用法，例如 `0.1.0 -> 0.2.0`
 - `major`：不兼容变更，例如删命令或改参数语义
+
+```shell
+mindreon release patch --skip-github-release --skip-publish
+```
