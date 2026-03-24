@@ -97,7 +97,31 @@ function installDvc() {
     if (!hasPython3()) {
         throw new Error("python3 is required to install dvc[s3].");
     }
-    runCommand("python3", ["-m", "pip", "install", "--user", "dvc[s3]"]);
+
+    const baseArgs = ["-m", "pip", "install"];
+    const installArgs =
+        typeof process.getuid === "function" && process.getuid() === 0
+            ? [...baseArgs, "dvc[s3]"]
+            : [...baseArgs, "--user", "dvc[s3]"];
+
+    let result = tryCommand("python3", installArgs);
+    if (result.status === 0) {
+        return;
+    }
+
+    const stderr = `${result.stderr || ""}\n${result.stdout || ""}`;
+    if (stderr.includes("externally-managed-environment")) {
+        const retryArgs =
+            typeof process.getuid === "function" && process.getuid() === 0
+                ? [...baseArgs, "--break-system-packages", "dvc[s3]"]
+                : [...baseArgs, "--user", "--break-system-packages", "dvc[s3]"];
+        runCommand("python3", retryArgs);
+        return;
+    }
+
+    throw new Error(
+        stderr.trim() || "Failed to install dvc[s3]."
+    );
 }
 
 export async function runInstall({ argv }) {
@@ -124,7 +148,7 @@ export async function runInstall({ argv }) {
     }
 
     if (!hasDvc()) {
-        console.log("Installing dvc[s3] with python3 -m pip...");
+        console.log("Installing dvc[s3]...");
         installDvc();
     } else {
         console.log("dvc is already installed.");

@@ -60,6 +60,7 @@ mindreon repo push
 说明：
 - `mindreon install` 会检查并安装 `git`、`git-lfs`、`python3`、`python3-pip` 和 `dvc[s3]`
 - 对于已经安装好的依赖，会直接提示已安装并跳过，不会重复安装
+- 在 Debian / Ubuntu 这类启用了 PEP 668 的环境里，`mindreon install` 会在必要时自动改用 `pip --break-system-packages`
 - `repo add` 默认把大于 `5 MiB` 的文件交给 `dvc add`
 - `--threshold` 单位是 `MiB`
 
@@ -76,8 +77,15 @@ git lfs install
 ```bash
 sudo apt-get update
 sudo apt-get install -y git git-lfs python3 python3-pip
-python3 -m pip install --user "dvc[s3]"
+python3 -m pip install --user --break-system-packages "dvc[s3]"
 git lfs install
+```
+
+如果你不想改系统 Python，也可以手动使用 `pipx`：
+
+```bash
+sudo apt-get install -y pipx
+pipx install "dvc[s3]"
 ```
 
 - RHEL / CentOS / Rocky / AlmaLinux
