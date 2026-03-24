@@ -49,7 +49,7 @@ export function printLoginHelp() {
 Usage: mindreon login [options]
 
 Options:
-  --url <url>            Mindreon API URL
+  --url <url>            Mindreon base URL
   --username <name>      Login username
   --password <password>  Login password
   -h, --help             Show this help message

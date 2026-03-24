@@ -20,9 +20,9 @@ export async function runLogin({ argv }) {
 
     if (process.stdin.isTTY) {
         if (!args.url) {
-            url = await prompt("API URL");
+            url = await prompt("Base URL");
             if (!url) {
-                throw new Error("API URL is required.");
+                throw new Error("Base URL is required.");
             }
         }
         if (!username) {
@@ -43,7 +43,7 @@ export async function runLogin({ argv }) {
 
     // Save custom URL if provided, so subsequent commands use it
     if (url) {
-        console.log(`Setting API URL to: ${url}`);
+        console.log(`Setting Base URL to: ${url}`);
         await saveConfig({ url });
         // Update env for current process so request uses it
         process.env.MINDREON_API_URL = url;
