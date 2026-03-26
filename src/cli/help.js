@@ -28,31 +28,31 @@ Example:
   mindreon model connect --name example-model --version v1
   mindreon repo add
   mindreon repo add --threshold 5
-  mindreon image push docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
+  mindreon image copy docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
 `);
 }
 
 export function printImageHelp() {
   process.stdout.write(`
 Usage: mindreon image <src> <dst> [options]
-       mindreon image push <src> <dst> [options]
-       mindreon image push --from <src> --to <dst> [options]
+       mindreon image copy <src> <dst> [options]
+       mindreon image copy --from <src> --to <dst> [options]
 
 Commands:
-  push                           Copy or push an image from src to dst
+  copy                           Copy an image from src to dst
 
 Options:
   --from <src>                   Source image reference
   --to <dst>                     Destination image reference
   --src-tls-verify <bool>        Verify source registry TLS (default: false)
   --dest-tls-verify <bool>       Verify destination registry TLS (default: false)
-  --dry-run                      Print the skopeo command without executing it
+  --dry-run                      Print the skopeo command only, do not execute the copy
   -h, --help                     Show this help message
 
 Examples:
   mindreon image docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
-  mindreon image push docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
-  mindreon image push --from quay.io/prometheus/prometheus:v2.54.1 --to harbor.example.com/ops/prometheus:v2.54.1
+  mindreon image copy docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
+  mindreon image copy --from quay.io/prometheus/prometheus:v2.54.1 --to harbor.example.com/ops/prometheus:v2.54.1
 `);
 }
 

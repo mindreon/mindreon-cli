@@ -113,7 +113,7 @@ mindreon image docker.io/library/nginx:latest harbor.example.com/demo/nginx:late
 也支持显式写法：
 
 ```bash
-mindreon image push --from docker.io/library/nginx:latest --to harbor.example.com/demo/nginx:latest
+mindreon image copy --from docker.io/library/nginx:latest --to harbor.example.com/demo/nginx:latest
 ```
 
 说明：

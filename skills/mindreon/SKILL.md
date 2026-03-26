@@ -69,7 +69,7 @@ mindreon repo add --threshold 10 --count-threshold 5000
 如果需要把镜像从一个仓库推到另一个仓库：
 ```bash
 mindreon image <SRC_IMAGE> <DST_IMAGE>
-mindreon image push --from <SRC_IMAGE> --to <DST_IMAGE>
+mindreon image copy --from <SRC_IMAGE> --to <DST_IMAGE>
 ```
 
 ### 5. 任务调度 (Workload: AI Nexus)

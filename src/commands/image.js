@@ -38,13 +38,17 @@ function formatCommand(args) {
 export async function runImage({ argv }) {
     const args = parseArgs(argv);
     const subCommand = args._[0] || "";
-    const implicitPush = subCommand && subCommand !== "push";
+    const implicitCopy = subCommand && subCommand !== "copy";
 
-    const src = args.from || args.src || (implicitPush ? args._[0] : args._[1]) || "";
-    const dst = args.to || args.dst || (implicitPush ? args._[1] : args._[2]) || "";
+    if (subCommand === "push") {
+        throw new Error("Unknown image command: push. Use 'mindreon image copy <src> <dst>' instead.");
+    }
+
+    const src = args.from || args.src || (implicitCopy ? args._[0] : args._[1]) || "";
+    const dst = args.to || args.dst || (implicitCopy ? args._[1] : args._[2]) || "";
 
     if (!src || !dst) {
-        throw new Error("Usage: mindreon image <src> <dst>");
+        throw new Error("Usage: mindreon image copy <src> <dst>");
     }
 
     const skopeoArgs = [
@@ -62,10 +66,10 @@ export async function runImage({ argv }) {
     }
 
     if (!commandExists("skopeo")) {
-        throw new Error("skopeo is required for image push. Please install skopeo first.");
+        throw new Error("skopeo is required for image copy. Please install skopeo first.");
     }
 
-    console.log(`Pushing image from ${src} to ${dst}...`);
+    console.log(`Copying image from ${src} to ${dst}...`);
     runCommand("skopeo", skopeoArgs);
-    console.log(`Image push completed: ${dst}`);
+    console.log(`Image copy completed: ${dst}`);
 }
