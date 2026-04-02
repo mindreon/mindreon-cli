@@ -15,15 +15,21 @@ export async function runModel({ argv }) {
         const name = args.name;
         const displayName = args.displayName || name;
         const description = args.description || "";
+        const source = normalizeModelSourceArg(args.source);
 
         if (!name) {
-            throw new Error("Usage: mindreon model create --name <name> [--displayName <name>] [--description <desc>]");
+            throw new Error("Usage: mindreon model create --name <name> [--displayName <name>] [--description <desc>] [--source <pageUpload|preset|taskPublish>]");
         }
 
         console.log(`Creating model: ${name}`);
         const response = await request(`${apiPrefix}/api/v1/models`, {
             method: "POST",
-            body: { name, displayName, description },
+            body: {
+                name,
+                displayName,
+                description,
+                ...(source ? { source } : {}),
+            },
         });
 
         console.log("Model created successfully.");
@@ -88,4 +94,21 @@ export async function runModel({ argv }) {
 
 function normalizeEntityName(args, legacyKey) {
     return args.name || args[legacyKey] || "";
+}
+
+function normalizeModelSourceArg(raw) {
+    if (!raw) {
+        return "";
+    }
+
+    const sourceMap = new Map([
+        ["pageupload", "pageUpload"],
+        ["preset", "preset"],
+        ["taskpublish", "taskPublish"],
+    ]);
+    const normalized = sourceMap.get(String(raw).trim().toLowerCase());
+    if (!normalized) {
+        throw new Error("Unsupported model source. Use one of: pageUpload, preset, taskPublish");
+    }
+    return normalized;
 }

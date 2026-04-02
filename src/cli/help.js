@@ -122,8 +122,12 @@ Commands:
   version create                 Create a model version
   connect                        Initialize a local model workspace
 
+Create Options:
+  --source <pageUpload|preset|taskPublish>  Specify model source when creating a model
+
 Examples:
   mindreon model create --name my-model
+  mindreon model create --name builtin-qwen --source preset
   mindreon model version create --name my-model --version v1 --base main
   mindreon model connect --name my-model --version main
 `);

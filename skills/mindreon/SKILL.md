@@ -32,6 +32,7 @@ mindreon login --username <USERNAME> --password <PASSWORD> [--url https://dev-4-
 创建模型：
 ```bash
 mindreon model create --name "my-cool-model" --description "A fresh new model"
+mindreon model create --name "builtin-qwen" --description "Preset model" --source "preset"
 ```
 创建版本（branch）：
 ```bash

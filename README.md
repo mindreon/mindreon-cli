@@ -318,6 +318,7 @@ mindreon repo push
 
 ```bash
 mindreon model create --name "my-model" --description "demo model"
+mindreon model create --name "builtin-qwen" --description "preset model" --source "preset"
 mindreon model version create --name "my-model" --version "v1" --base "main"
 ```
 
