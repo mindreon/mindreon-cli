@@ -43,19 +43,19 @@ make image-run-help
 如果要构建并推送当前机器架构的单架构镜像：
 
 ```bash
-make image-build-push IMAGE_NAME=harbor.mindreon.com/mindreon/mindreon-cli IMAGE_TAG=v0.1.0
+make image-build-push IMAGE_NAME=harbor.mindreon.com/baize/mindreon-cli IMAGE_TAG=v0.1.0
 ```
 
 如果要同时构建 `amd64` 和 `arm64` 多架构镜像并推送：
 
 ```bash
-make image-buildx-push IMAGE_NAME=mindreon/mindreon-cli IMAGE_TAG=latest
+make image-buildx-push IMAGE_NAME=baize/mindreon-cli IMAGE_TAG=latest
 ```
 
 如果只想在本地测试多架构构建流程，也可以执行：
 
 ```bash
-make image-buildx IMAGE_NAME=mindreon/mindreon-cli IMAGE_TAG=dev
+make image-buildx IMAGE_NAME=baize/mindreon-cli IMAGE_TAG=dev
 ```
 
 容器里已经预装：
@@ -78,7 +78,7 @@ make image-buildx IMAGE_NAME=mindreon/mindreon-cli IMAGE_TAG=dev
 docker run -it \
   -v "$PWD":/workspace \
   -w /workspace \
-  harbor.mindreon.com/mindreon/mindreon-cli:v0.1.0 \
+  harbor.mindreon.com/baize/mindreon-cli:v0.1.0 \
   bash
 ```
 
