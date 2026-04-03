@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { URL } from "node:url";
 import { readIni, writeIni } from "./ini.js";
-import { buildGitUrl, getFvsCredentials, lookupFvs } from "./fvm.js";
+import { buildGitUrl, getFvsCredentials, lookupFvs, waitForRepoReady } from "./fvm.js";
 import { captureCommand, runCommand, tryCommand } from "./shell.js";
 import { loadConfig } from "../cli/config.js";
 
@@ -360,6 +360,10 @@ export async function connectWorkspace({ cwd, bindType, bindName, version }) {
         throw new Error(`Unable to resolve FVS for ${bindType} '${bindName}'.`);
     }
 
+    await waitForRepoReady(fvsId, {
+        label: `${bindType} '${bindName}'`,
+    });
+
     const creds = await getFvsCredentials(fvsId);
     const gitUrl = await buildGitUrl(fvsInfo, bindName, { forceRefresh: true });
 
@@ -387,6 +391,49 @@ export async function connectWorkspace({ cwd, bindType, bindName, version }) {
     return {
         fvsId,
         branch: resolvedBranch || normalizeBranch(version) || fvsInfo.defaultBranch || "main",
+    };
+}
+
+export async function ensureDownloadTargetAvailable(cwd) {
+    if (!(await pathExists(cwd))) {
+        return;
+    }
+
+    const stat = await fs.stat(cwd);
+    if (!stat.isDirectory()) {
+        throw new Error(`Target path already exists and is not a directory: ${cwd}`);
+    }
+
+    const entries = await fs.readdir(cwd);
+    if (entries.length === 0) {
+        throw new Error(`Target directory already exists: ${cwd}. Please remove it or choose another path.`);
+    }
+
+    throw new Error(`Target directory already exists and is not empty: ${cwd}. Please remove it or choose another path.`);
+}
+
+export async function pullWorkspace(cwd) {
+    await refreshWorkspaceGitRemote(cwd);
+    const workspaceConfig = await readWorkspaceConfig(cwd);
+    const preferredBranch = getCurrentBranch(cwd) || workspaceConfig.fvc?.version || "";
+    const branch = syncWorkspaceBranch(cwd, preferredBranch);
+    await refreshWorkspaceCredentials(cwd);
+    runCommand("dvc", ["pull"], { cwd });
+    return { branch };
+}
+
+export async function downloadWorkspace({ cwd, bindType, bindName, version }) {
+    await ensureDownloadTargetAvailable(cwd);
+    const connected = await connectWorkspace({
+        cwd,
+        bindType,
+        bindName,
+        version,
+    });
+    const pulled = await pullWorkspace(cwd);
+    return {
+        ...connected,
+        branch: pulled.branch || connected.branch,
     };
 }
 

@@ -4,8 +4,9 @@
 
 - 安装依赖
 - 登录平台
+- 创建模型或数据集
 - 连接模型或数据集
-- 拉取仓库内容
+- 下载完整工作区
 - 修改文件
 - 提交代码
 - 推送代码和 DVC 数据
@@ -180,13 +181,13 @@ mindreon login --url https://your-domain --username <USERNAME> --password <PASSW
 ### 连接模型
 
 ```bash
-mindreon model connect --name "Qwen2.5-7B-Instruct" --version "main"
+mindreon connect --model "Qwen2.5-7B-Instruct" --version "main"
 ```
 
 ### 连接数据集
 
 ```bash
-mindreon dataset connect --name "my-dataset" --version "main"
+mindreon connect --dataset "my-dataset" --version "main"
 ```
 
 说明：
@@ -198,12 +199,31 @@ mindreon dataset connect --name "my-dataset" --version "main"
 如果你想手动指定目录：
 
 ```bash
-mindreon model connect --name "Qwen2.5-7B-Instruct" --version "main" --dir ./workspace/model
+mindreon connect --model "Qwen2.5-7B-Instruct" --version "main" --dir ./workspace/model
 ```
 
-## 第四步：拉取仓库内容
+## 第四步：下载完整工作区
 
-进入 `connect` 提示的目录后执行：
+如果你希望一条命令完成“创建目录 + connect + repo pull”，可以直接执行：
+
+```bash
+mindreon download --model "Qwen2.5-7B-Instruct" --version "main"
+```
+
+或者：
+
+```bash
+mindreon download --dataset "my-dataset" --version "main"
+```
+
+说明：
+
+- `download` 会自动创建目标目录，并完成初始化和远端内容拉取
+- 如果目标路径已经存在，命令会直接中断并提示，不会覆写已有目录
+
+## 第五步：拉取仓库内容
+
+如果你使用的是 `connect`，进入提示的目录后执行：
 
 ```bash
 cd ./Qwen2.5-7B-Instruct
@@ -214,7 +234,7 @@ mindreon repo pull
 
 - 拉取仓库代码，模型或者数据集文件
 
-## 第五步：修改文件
+## 第六步：修改文件
 
 你可以直接在工作区内修改模型相关文件或数据集文件，例如：
 
@@ -247,7 +267,7 @@ Mindreon CLI 里，`git` 和 `dvc` 分工不同：
 - Git 负责管理代码和元数据
 - DVC 负责管理大文件版本和远端存储
 
-## 第六步：把修改加入版本控制
+## 第七步：把修改加入版本控制
 
 执行：
 
@@ -269,7 +289,7 @@ mindreon repo add --count-threshold 5000
 mindreon repo add --threshold 1 --count-threshold 5000
 ```
 
-## 第七步：提交代码
+## 第八步：提交代码
 
 执行：
 
@@ -277,7 +297,7 @@ mindreon repo add --threshold 1 --count-threshold 5000
 mindreon repo commit -m "update assets"
 ```
 
-## 第八步：推送代码
+## 第九步：推送代码
 
 执行：
 
@@ -299,9 +319,24 @@ mindreon repo push
 ```bash
 mindreon install
 mindreon login
-mindreon model connect --name "Qwen2.5-7B-Instruct" --version "main"
+mindreon connect --model "Qwen2.5-7B-Instruct" --version "main"
 cd ./Qwen2.5-7B-Instruct
 mindreon repo pull
+
+echo "hello" > note.txt
+
+mindreon repo add
+mindreon repo commit -m "update note"
+mindreon repo push
+```
+
+如果你想一步到位，也可以直接用：
+
+```bash
+mindreon install
+mindreon login
+mindreon download --model "Qwen2.5-7B-Instruct" --version "main"
+cd ./Qwen2.5-7B-Instruct
 
 echo "hello" > note.txt
 
@@ -317,16 +352,16 @@ mindreon repo push
 创建模型：
 
 ```bash
-mindreon model create --name "my-model" --description "demo model"
-mindreon model create --name "builtin-qwen" --description "preset model" --source "preset"
-mindreon model version create --name "my-model" --version "v1" --base "main"
+mindreon create --model "my-model" --description "demo model"
+mindreon create --model "builtin-qwen" --description "preset model" --source "preset"
+mindreon create version --model "my-model" --version "v1" --base "main"
 ```
 
 创建数据集：
 
 ```bash
-mindreon dataset create --name "my-dataset"
-mindreon dataset version create --name "my-dataset" --version "v1" --base "main"
+mindreon create --dataset "my-dataset"
+mindreon create version --dataset "my-dataset" --version "v1" --base "main"
 ```
 
 ## 其他命令
@@ -341,8 +376,9 @@ mindreon repo status
 
 ```bash
 mindreon help
-mindreon model --help
-mindreon dataset --help
+mindreon create --help
+mindreon connect --help
+mindreon download --help
 mindreon repo --help
 ```
 

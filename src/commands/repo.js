@@ -4,6 +4,7 @@ import {
     ensureGitIdentity,
     getCurrentBranch,
     planTrackingPaths,
+    pullWorkspace,
     readWorkspaceConfig,
     refreshWorkspaceCredentials,
     refreshWorkspaceGitRemote,
@@ -57,13 +58,10 @@ export async function runRepo({ argv }) {
 
     if (subCommand === "pull") {
         console.log("Refreshing Git remote token...");
-        await refreshWorkspaceGitRemote(cwd);
         console.log("Syncing Git metadata...");
-        syncWorkspaceBranch(cwd, getCurrentBranch(cwd));
         console.log("Refreshing workspace credentials...");
-        await refreshWorkspaceCredentials(cwd);
         console.log("Pulling DVC data...");
-        runCommand("dvc", ["pull"], { cwd });
+        await pullWorkspace(cwd);
         return;
     }
 

@@ -2,19 +2,21 @@
 import process from "node:process";
 import { extractCommand, hasHelpFlag } from "./cli/args.js";
 import {
-    printDatasetHelp,
+    printConnectHelp,
+    printCreateHelp,
+    printDownloadHelp,
     printImageHelp,
     printInstallHelp,
     printLoginHelp,
-    printModelHelp,
     printReleaseHelp,
     printRootHelp,
     printWorkloadHelp,
 } from "./cli/help.js";
+import { runConnect } from "./commands/connect.js";
+import { runCreate } from "./commands/create.js";
+import { runDownload } from "./commands/download.js";
 import { runLogin } from "./commands/login.js";
 import { runInstall } from "./commands/install.js";
-import { runDataset } from "./commands/dataset.js";
-import { runModel } from "./commands/model.js";
 import { runRepo } from "./commands/repo.js";
 import { printRepoHelp } from "./commands/repo-help.js";
 import { runWorkload } from "./commands/workload.js";
@@ -39,8 +41,9 @@ function exitWithError(error) {
 function printCommandHelp(command) {
     if (command === "login") return printLoginHelp();
     if (command === "install") return printInstallHelp();
-    if (command === "dataset") return printDatasetHelp();
-    if (command === "model") return printModelHelp();
+    if (command === "create") return printCreateHelp();
+    if (command === "connect") return printConnectHelp();
+    if (command === "download") return printDownloadHelp();
     if (command === "repo") return printRepoHelp();
     if (command === "workload") return printWorkloadHelp();
     if (command === "image") return printImageHelp();
@@ -72,21 +75,30 @@ try {
         process.exit(0);
     }
 
-    if (command === "dataset") {
+    if (command === "create") {
         if (argvWithoutCommand.length === 0 || hasHelpFlag(argvWithoutCommand)) {
-            printDatasetHelp();
+            printCreateHelp();
             process.exit(0);
         }
-        await runDataset({ argv: argvWithoutCommand, env: process.env });
+        await runCreate({ argv: argvWithoutCommand, env: process.env });
         process.exit(0);
     }
 
-    if (command === "model") {
+    if (command === "connect") {
         if (argvWithoutCommand.length === 0 || hasHelpFlag(argvWithoutCommand)) {
-            printModelHelp();
+            printConnectHelp();
             process.exit(0);
         }
-        await runModel({ argv: argvWithoutCommand, env: process.env });
+        await runConnect({ argv: argvWithoutCommand, env: process.env });
+        process.exit(0);
+    }
+
+    if (command === "download") {
+        if (argvWithoutCommand.length === 0 || hasHelpFlag(argvWithoutCommand)) {
+            printDownloadHelp();
+            process.exit(0);
+        }
+        await runDownload({ argv: argvWithoutCommand, env: process.env });
         process.exit(0);
     }
 

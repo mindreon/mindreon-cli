@@ -11,8 +11,9 @@ Usage:
 Commands:
   login         Authenticate with Mindreon IAM service
   install       Install or verify git, git-lfs, and dvc[s3]
-  dataset       Dataset and dataset version management
-  model         Model and model version management
+  create        Create model or dataset resources and versions
+  connect       Initialize a local model or dataset workspace
+  download      Create a workspace directory and pull remote content
   repo          Local Git/DVC workspace operations
   workload      Create and manage training, dev, or inference workloads
   image         Copy or push images between registries
@@ -25,10 +26,86 @@ Options:
 Example:
   mindreon login
   mindreon login --username admin --password secret
-  mindreon model connect --name example-model --version v1
+  mindreon create --model example-model
+  mindreon connect --model example-model --version v1
+  mindreon download --dataset example-dataset --version main
   mindreon repo add
   mindreon repo add --threshold 5
   mindreon image copy docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
+`);
+}
+
+export function printCreateHelp() {
+  process.stdout.write(`
+Usage: mindreon create [options]
+       mindreon create version [options]
+
+Commands:
+  version                        Create a model or dataset version
+
+Options:
+  --model <name>                 Target model name
+  --dataset <name>               Target dataset name
+  --displayName <name>           Display name for resource creation
+  --description <desc>           Description for resource creation
+  --source <pageUpload|preset|taskPublish>
+                                 Model source when creating a model
+  --version <version>            Version name for version creation
+  --base <branch>                Base branch for version creation
+  -h, --help                     Show this help message
+
+Notes:
+  Exactly one of --model or --dataset must be provided.
+
+Examples:
+  mindreon create --model my-model
+  mindreon create --model builtin-qwen --source preset
+  mindreon create --dataset my-dataset
+  mindreon create version --model my-model --version v1 --base main
+  mindreon create version --dataset my-dataset --version v1 --base main
+`);
+}
+
+export function printConnectHelp() {
+  process.stdout.write(`
+Usage: mindreon connect (--model <name> | --dataset <name>) [options]
+
+Options:
+  --model <name>                 Target model name
+  --dataset <name>               Target dataset name
+  --version <version>            Branch or version to initialize
+  --dir <path>                   Target workspace directory
+  -h, --help                     Show this help message
+
+Notes:
+  connect only initializes the local workspace. It does not pull remote files.
+
+Examples:
+  mindreon connect --model my-model --version main
+  mindreon connect --dataset my-dataset --version main
+  mindreon connect --model my-model --dir ./workspace/model
+`);
+}
+
+export function printDownloadHelp() {
+  process.stdout.write(`
+Usage: mindreon download (--model <name> | --dataset <name>) [options]
+
+Options:
+  --model <name>                 Target model name
+  --dataset <name>               Target dataset name
+  --version <version>            Branch or version to download
+  --dir <path>                   Target workspace directory
+  -h, --help                     Show this help message
+
+Notes:
+  download runs the full workflow: create directory, connect workspace, and pull remote content.
+  If the target path already exists, the command stops immediately.
+
+Examples:
+  mindreon download --model my-model --version main
+  mindreon download --dataset my-dataset --version main
+  mindreon download --model my-model --dir ./workspace/model
 `);
 }
 
@@ -94,42 +171,6 @@ Options:
   --check                Only print dependency status, do not install
   --skip-skopeo          Do not install optional skopeo
   -h, --help             Show this help message
-`);
-}
-
-export function printDatasetHelp() {
-  process.stdout.write(`
-Usage: mindreon dataset <command> [options]
-
-Commands:
-  create                         Create a dataset
-  version create                 Create a dataset version
-  connect                        Initialize a local dataset workspace
-
-Examples:
-  mindreon dataset create --name my-dataset
-  mindreon dataset version create --name my-dataset --version v1 --base main
-  mindreon dataset connect --name my-dataset --version main
-`);
-}
-
-export function printModelHelp() {
-  process.stdout.write(`
-Usage: mindreon model <command> [options]
-
-Commands:
-  create                         Create a model
-  version create                 Create a model version
-  connect                        Initialize a local model workspace
-
-Create Options:
-  --source <pageUpload|preset|taskPublish>  Specify model source when creating a model
-
-Examples:
-  mindreon model create --name my-model
-  mindreon model create --name builtin-qwen --source preset
-  mindreon model version create --name my-model --version v1 --base main
-  mindreon model connect --name my-model --version main
 `);
 }
 
