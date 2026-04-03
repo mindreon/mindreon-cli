@@ -402,6 +402,19 @@ export async function connectWorkspace({ cwd, bindType, bindName, version }) {
     };
 }
 
+async function isConnectedWorkspace(cwd) {
+    const gitDir = path.join(cwd, ".git");
+    const dvcDir = path.join(cwd, ".dvc");
+    const workspaceConfigPath = path.join(dvcDir, "fvc_config");
+
+    if (!(await pathExists(gitDir)) || !(await pathExists(dvcDir)) || !(await pathExists(workspaceConfigPath))) {
+        return false;
+    }
+
+    const workspaceConfig = await readWorkspaceConfig(cwd);
+    return Boolean(workspaceConfig.fvc?.fvs_id);
+}
+
 export async function ensureDownloadTargetAvailable(cwd) {
     if (!(await pathExists(cwd))) {
         return;
@@ -414,7 +427,11 @@ export async function ensureDownloadTargetAvailable(cwd) {
 
     const entries = await fs.readdir(cwd);
     if (entries.length === 0) {
-        throw new Error(`Target directory already exists: ${cwd}. Please remove it or choose another path.`);
+        return;
+    }
+
+    if (await isConnectedWorkspace(cwd)) {
+        return;
     }
 
     throw new Error(`Target directory already exists and is not empty: ${cwd}. Please remove it or choose another path.`);

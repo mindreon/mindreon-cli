@@ -99,7 +99,8 @@ Options:
 
 Notes:
   download runs the full workflow: create directory, connect workspace, and pull remote content.
-  If the target path already exists, the command stops immediately.
+  If the target path is an existing Mindreon workspace, the command reuses it and continues pulling remote content.
+  If the target path is a non-empty directory but not a Mindreon workspace, the command stops immediately.
 
 Examples:
   mindreon download --model my-model --version main
