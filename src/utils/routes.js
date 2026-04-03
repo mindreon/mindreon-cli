@@ -2,6 +2,15 @@ function normalizeBaseUrl(baseUrl) {
     return String(baseUrl || "").trim().replace(/\/+$/, "");
 }
 
+function readServiceBaseUrlOverride(serviceName) {
+    const key = `MINDREON_${serviceName.toUpperCase()}_URL`;
+    const value = process.env[key];
+    if (typeof value !== "string") {
+        return "";
+    }
+    return normalizeBaseUrl(value);
+}
+
 function isLikelyInternalBaseUrl(baseUrl) {
     const normalized = normalizeBaseUrl(baseUrl).toLowerCase();
     return (
@@ -81,4 +90,12 @@ export function shouldRequestExternalEndpoints(baseUrl) {
 
 export function normalizeResolvedBaseUrl(baseUrl) {
     return normalizeBaseUrl(baseUrl);
+}
+
+export function resolveServiceBaseUrl(serviceName, config = {}) {
+    const override = readServiceBaseUrlOverride(serviceName);
+    if (override) {
+        return override;
+    }
+    return normalizeResolvedBaseUrl(process.env.MINDREON_API_URL || config.url || "");
 }

@@ -1,8 +1,8 @@
 import { URL } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 import { loadConfig, saveConfig } from "../cli/config.js";
-import { request, resolveBaseUrl } from "../api/client.js";
-import { getServicePrefix, shouldRequestExternalEndpoints } from "./routes.js";
+import { request } from "../api/client.js";
+import { getServicePrefix, resolveServiceBaseUrl, shouldRequestExternalEndpoints } from "./routes.js";
 
 const READY_REPO_STATUSES = new Set(["", "ready"]);
 const FAILED_REPO_STATUSES = new Set(["failed"]);
@@ -11,14 +11,21 @@ const DEFAULT_REPO_READY_INTERVAL_MS = 2000;
 
 export async function getMindreonContext() {
     const config = await loadConfig();
-    const baseUrl = resolveBaseUrl(config);
+    const fvmBaseUrl = resolveServiceBaseUrl("fvm", config);
     const token = config.token || "";
+    const explicitExternal = String(process.env.MINDREON_FVM_EXTERNAL || "").trim().toLowerCase();
+    const externalEndpoints =
+        explicitExternal === "true" || explicitExternal === "1"
+            ? true
+            : explicitExternal === "false" || explicitExternal === "0"
+              ? false
+              : shouldRequestExternalEndpoints(fvmBaseUrl);
     return {
         config,
-        baseUrl,
+        fvmBaseUrl,
         token,
-        fvmPrefix: getServicePrefix("fvm", baseUrl),
-        externalEndpoints: shouldRequestExternalEndpoints(baseUrl),
+        fvmPrefix: getServicePrefix("fvm", fvmBaseUrl),
+        externalEndpoints,
     };
 }
 
@@ -36,7 +43,9 @@ export async function getGitAccessToken({ forceRefresh = false } = {}) {
         return context.config.gitAccessToken;
     }
 
-    const response = await request(`${context.fvmPrefix}/api/auth/git-token`);
+    const response = await request(`${context.fvmPrefix}/api/auth/git-token`, {
+        baseUrl: context.fvmBaseUrl,
+    });
     const gitAccessToken =
         response?.data?.token ||
         response?.data?.accessToken ||
@@ -54,13 +63,17 @@ export async function getGitAccessToken({ forceRefresh = false } = {}) {
 export async function lookupFvs(bindType, name) {
     const context = await ensureLoggedIn();
     const params = new URLSearchParams({ bindType, name });
-    const response = await request(`${context.fvmPrefix}/api/v1/fvs/lookup?${params.toString()}`);
+    const response = await request(`${context.fvmPrefix}/api/v1/fvs/lookup?${params.toString()}`, {
+        baseUrl: context.fvmBaseUrl,
+    });
     return response.data || response;
 }
 
 export async function getFileVersion(fvsId) {
     const context = await ensureLoggedIn();
-    const response = await request(`${context.fvmPrefix}/api/v1/fvs/${encodeURIComponent(fvsId)}`);
+    const response = await request(`${context.fvmPrefix}/api/v1/fvs/${encodeURIComponent(fvsId)}`, {
+        baseUrl: context.fvmBaseUrl,
+    });
     return response.data || response;
 }
 
@@ -72,20 +85,23 @@ export async function getFvsCredentials(fvsId) {
     }
     const suffix = params.toString() ? `?${params.toString()}` : "";
     const response = await request(
-        `${context.fvmPrefix}/api/v1/fvs/${encodeURIComponent(fvsId)}/credentials${suffix}`
+        `${context.fvmPrefix}/api/v1/fvs/${encodeURIComponent(fvsId)}/credentials${suffix}`,
+        {
+            baseUrl: context.fvmBaseUrl,
+        }
     );
     return response.data || response;
 }
 
 export async function buildGitUrl(fvsInfo, fallbackName, options = {}) {
-    const { baseUrl, fvmPrefix } = await ensureLoggedIn();
+    const { fvmBaseUrl, fvmPrefix } = await ensureLoggedIn();
     const gitAccessToken = await getGitAccessToken(options);
     const repoId = fvsInfo?.id || fvsInfo?.fvsId || fvsInfo?.repoId || fallbackName;
     if (!repoId) {
         throw new Error("Unable to resolve Git repository identifier from FVS.");
     }
 
-    const url = new URL(baseUrl);
+    const url = new URL(fvmBaseUrl);
     const basePath = url.pathname.replace(/\/$/, "");
     const proxyPrefix = fvmPrefix ? `${fvmPrefix}` : "";
     const encodedToken = encodeURIComponent(gitAccessToken);

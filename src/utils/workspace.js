@@ -10,6 +10,7 @@ const INTERNAL_DIRS = new Set([".git", ".dvc"]);
 const ALWAYS_GIT_TRACK_FILES = new Set([".dvcignore", ".gitignore", ".gitattributes", ".gitmodules"]);
 const DEFAULT_THRESHOLD_MB = 5;
 const DEFAULT_FILE_COUNT_THRESHOLD = 2000;
+const DEFAULT_DVC_CACHE_TYPE = "copy";
 
 function normalizeBranch(value) {
     return (value || "").trim();
@@ -155,9 +156,19 @@ export async function ensureDvcConfig(cwd, creds, fvsId) {
     const bucket = creds.bucket || "";
     const prefix = creds.prefix || fvsId;
     const remoteConfig = {};
+    const cacheDir = String(process.env.MINDREON_DVC_CACHE_DIR || process.env.DVC_CACHE_DIR || "").trim();
+    const cacheType = String(process.env.MINDREON_DVC_CACHE_TYPE || process.env.DVC_CACHE_TYPE || "").trim();
 
     if (bucket) {
         remoteConfig.url = `s3://${bucket}/${prefix}`;
+    }
+
+    const cacheConfig = {
+        ...(existing.cache || {}),
+        type: cacheType || (existing.cache || {}).type || DEFAULT_DVC_CACHE_TYPE,
+    };
+    if (cacheDir) {
+        cacheConfig.dir = cacheDir;
     }
 
     const nextConfig = {
@@ -167,10 +178,7 @@ export async function ensureDvcConfig(cwd, creds, fvsId) {
             remote: (existing.core || {}).remote || "storage",
             autostage: (existing.core || {}).autostage || "true",
         },
-        cache: {
-            ...(existing.cache || {}),
-            type: "copy",
-        },
+        cache: cacheConfig,
         [remoteSection]: remoteConfig,
     };
 

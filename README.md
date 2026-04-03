@@ -312,6 +312,30 @@ mindreon repo push
 - 执行 `dvc push`
 - 执行 `git push`
 
+## 内网与缓存配置
+
+如果是在 Kubernetes 集群内通过 service 地址访问，可以按需注入这些环境变量：
+
+```bash
+export MINDREON_IAM_URL="http://iam-service.default.svc.cluster.local:80"
+export MINDREON_FVM_URL="http://file-version-manager.default.svc.cluster.local:80"
+export MINDREON_FVM_EXTERNAL="false"
+```
+
+如果需要复用共享 DVC cache，可以配置：
+
+```bash
+export MINDREON_DVC_CACHE_DIR="/data/dvc-cache"
+export MINDREON_DVC_CACHE_TYPE="symlink,copy"
+```
+
+说明：
+
+- `MINDREON_IAM_URL` 用于 `mindreon login`
+- `MINDREON_FVM_URL` 用于 `download/connect/repo pull/push` 等 FVM 相关流程
+- `MINDREON_FVM_EXTERNAL=false` 会让 CLI 明确请求内网 S3 endpoint
+- `MINDREON_DVC_CACHE_TYPE` 默认是 `copy`，embedding 这类只读模型场景建议用 `symlink,copy`
+
 ## 一次完整示例
 
 下面是一套最常见的模型协作流程：

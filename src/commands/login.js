@@ -2,8 +2,8 @@ import process from "node:process";
 import readline from "node:readline";
 import { parseArgs } from "../cli/args.js";
 import { saveConfig, loadConfig } from "../cli/config.js";
-import { request, resolveBaseUrl } from "../api/client.js";
-import { getServicePrefix } from "../utils/routes.js";
+import { request } from "../api/client.js";
+import { getServicePrefix, resolveServiceBaseUrl } from "../utils/routes.js";
 
 export async function runLogin({ argv }) {
     const args = parseArgs(argv);
@@ -53,10 +53,12 @@ export async function runLogin({ argv }) {
 
     console.log(`Logging in as ${username}...`);
 
-    const baseUrl = resolveBaseUrl(await loadConfig());
-    const iamPrefix = getServicePrefix("iam", baseUrl);
+    const nextConfig = await loadConfig();
+    const iamBaseUrl = resolveServiceBaseUrl("iam", nextConfig);
+    const iamPrefix = getServicePrefix("iam", iamBaseUrl);
     const response = await request(`${iamPrefix}/api/v1/auth/login`, {
         method: "POST",
+        baseUrl: iamBaseUrl,
         skipAuth: true,
         body: {
             username,

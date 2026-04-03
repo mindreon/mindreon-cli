@@ -28,7 +28,7 @@ export async function request(endpoint, options = {}) {
         }
     }
 
-    const baseUrl = resolveBaseUrl(config);
+    const baseUrl = normalizeResolvedBaseUrl(options.baseUrl || resolveBaseUrl(config));
     const url = `${baseUrl}${endpoint}`;
 
     const fetchOptions = {
