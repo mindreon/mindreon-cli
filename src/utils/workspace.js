@@ -11,6 +11,7 @@ const ALWAYS_GIT_TRACK_FILES = new Set([".dvcignore", ".gitignore", ".gitattribu
 const DEFAULT_THRESHOLD_MB = 5;
 const DEFAULT_FILE_COUNT_THRESHOLD = 2000;
 const DEFAULT_DVC_CACHE_TYPE = "copy";
+const ROOT_DVC_GITIGNORE_VARIANTS = new Set([".dvc", ".dvc/", "/.dvc", "/.dvc/"]);
 
 function normalizeBranch(value) {
     return (value || "").trim();
@@ -32,6 +33,19 @@ async function pathExists(targetPath) {
     } catch {
         return false;
     }
+}
+
+function rootGitignoreHasDvcDir(content) {
+    for (const line of String(content || "").split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) {
+            continue;
+        }
+        if (ROOT_DVC_GITIGNORE_VARIANTS.has(trimmed)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function isInternalPath(relativePath) {
@@ -139,6 +153,23 @@ export async function ensureDvcGitignore(cwd) {
     }
 }
 
+export async function ensureRootGitignoreHasDvcDir(cwd) {
+    const gitignorePath = path.join(cwd, ".gitignore");
+    const existing = (await pathExists(gitignorePath))
+        ? await fs.readFile(gitignorePath, "utf-8")
+        : "";
+
+    if (rootGitignoreHasDvcDir(existing)) {
+        return;
+    }
+
+    const prefix = existing.trimEnd();
+    const next = prefix
+        ? `${prefix}\n\n# DVC metadata\n.dvc/\n`
+        : "# DVC metadata\n.dvc/\n";
+    await fs.writeFile(gitignorePath, next, "utf-8");
+}
+
 export async function readWorkspaceConfig(cwd) {
     const filePath = path.join(cwd, ".dvc", "fvc_config");
     return readIni(filePath);
@@ -150,18 +181,13 @@ export async function writeWorkspaceConfig(cwd, nextConfig) {
 }
 
 export async function ensureDvcConfig(cwd, creds, fvsId) {
+    await ensureRootGitignoreHasDvcDir(cwd);
+
     const configPath = path.join(cwd, ".dvc", "config");
     const existing = await readIni(configPath);
     const remoteSection = 'remote "storage"';
-    const bucket = creds.bucket || "";
-    const prefix = creds.prefix || fvsId;
-    const remoteConfig = {};
     const cacheDir = String(process.env.MINDREON_DVC_CACHE_DIR || process.env.DVC_CACHE_DIR || "").trim();
     const cacheType = String(process.env.MINDREON_DVC_CACHE_TYPE || process.env.DVC_CACHE_TYPE || "").trim();
-
-    if (bucket) {
-        remoteConfig.url = `s3://${bucket}/${prefix}`;
-    }
 
     const cacheConfig = {
         ...(existing.cache || {}),
@@ -175,19 +201,31 @@ export async function ensureDvcConfig(cwd, creds, fvsId) {
         ...existing,
         core: {
             ...(existing.core || {}),
-            remote: (existing.core || {}).remote || "storage",
-            autostage: (existing.core || {}).autostage || "true",
+            remote: "storage",
+            autostage: "true",
         },
         cache: cacheConfig,
-        [remoteSection]: remoteConfig,
+        [remoteSection]: buildRemoteStorageConfig(creds, fvsId),
     };
 
     await writeIni(configPath, nextConfig);
 }
 
-function buildRemoteCredentialSection(existingSection, creds) {
+function buildRemoteStorageConfig(creds, fvsId) {
+    const bucket = String(creds.bucket || "").trim();
+    const prefix = String(creds.prefix || fvsId || "").trim();
+
+    if (!bucket || !prefix) {
+        return {};
+    }
+
     return {
-        ...(existingSection || {}),
+        url: `s3://${bucket}/${prefix}`,
+    };
+}
+
+function buildRemoteCredentialSection(creds) {
+    return {
         endpointurl: normalizeDvcEndpointUrl(creds.endpointUrl || creds.endpoint_url || ""),
         access_key_id: creds.accessKeyId || creds.access_key_id || "",
         secret_access_key: creds.secretAccessKey || creds.secret_access_key || "",
@@ -201,7 +239,7 @@ async function writeDvcLocalConfig(cwd, creds) {
     const existing = await readIni(configPath);
     const nextConfig = {
         ...existing,
-        'remote "storage"': buildRemoteCredentialSection(existing['remote "storage"'], creds),
+        'remote "storage"': buildRemoteCredentialSection(creds),
     };
     await writeIni(configPath, nextConfig);
 }
