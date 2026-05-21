@@ -1,5 +1,5 @@
 {
-  "name": "@sanmu2018/mindreon-cli",
+  "name": "@mindreon/mindreon-cli",
   "version": "0.1.18",
   "description": "Mindreon CLI for local Git/DVC, model, dataset, and image workflows",
   "type": "module",

@@ -16,7 +16,7 @@
 全局安装：
 
 ```bash
-npm i -g @sanmu2018/mindreon-cli
+npm i -g @mindreon/mindreon-cli
 mindreon --help
 ```
 

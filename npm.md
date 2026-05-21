@@ -11,6 +11,22 @@ node -p "require('./package.json').version"
 
 ## GitHub Actions 发布
 
+首次切换到 `@mindreon/mindreon-cli` 后，建议先手动发布一次新包：
+
+```bash
+cd /path/to/mindreon-cli
+npm publish --access public
+```
+
+发布成功后，到 npm 包页面配置 Trusted Publisher：
+
+- Package: `@mindreon/mindreon-cli`
+- Repository owner/name: `mindreon/mindreon-cli`
+- Workflow file: `publish-npm.yml`
+- Environment: `npm-publish`
+
+配置后，推送 `v*` tag 会由 `.github/workflows/publish-npm.yml` 自动发布到 npm，不需要在 GitHub Secrets 里保存长期 npm token。
+
 ```bash
 cd /path/to/mindreon-cli
 mindreon release patch --skip-github-release --skip-publish
