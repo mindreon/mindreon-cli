@@ -1,6 +1,6 @@
 {
   "name": "@mindreon/mindreon-cli",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "Mindreon CLI for local Git/DVC, model, dataset, and image workflows",
   "type": "module",
   "bin": {
