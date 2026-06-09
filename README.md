@@ -122,6 +122,7 @@ mindreon image copy --from docker.io/library/nginx:latest --to harbor.example.co
 - 已安装的依赖会自动跳过
 - macOS 使用 `brew`，Linux 使用 `apt-get` / `dnf` / `yum`，Windows 使用 `winget`
 - 如果自动安装失败，命令会输出当前平台的手动安装建议
+- 如果 `dvc` 已通过 pip 安装但当前终端 PATH 还没生效，Mindreon CLI 会自动 fallback 到 `python -m dvc`
 - 在 Debian / Ubuntu 这类启用了 PEP 668 的环境里，命令会在必要时自动改用 `pip --break-system-packages`
 
 如果你想先只看依赖状态：
@@ -186,6 +187,8 @@ git lfs install
 python -m pip install --user "dvc[s3]"
 git lfs install
 ```
+
+如果 `dvc.exe` 已安装但 `dvc version` 仍提示找不到，`mindreon download` / `mindreon repo push` 会自动尝试使用 `python -m dvc`。如果你希望直接在终端使用 `dvc` 命令，再把 Python user Scripts 目录加入 PATH。
 
 ## 第二步：登录
 

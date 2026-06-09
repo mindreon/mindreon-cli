@@ -11,6 +11,7 @@ import {
     syncWorkspaceBranch,
 } from "../utils/workspace.js";
 import { runCommand, captureCommand, tryCommand } from "../utils/shell.js";
+import { runDvc, tryDvc } from "../utils/dvc.js";
 import { runInstall } from "./install.js";
 
 function getRepoRoot() {
@@ -42,9 +43,9 @@ export async function runRepo({ argv }) {
         }
         console.log("\nGit status:");
         runCommand("git", ["status", "--short"], { cwd });
-        if (tryCommand("dvc", ["version"], { cwd }).status === 0) {
+        if (tryDvc(["version"], { cwd }).status === 0) {
             console.log("\nDVC status:");
-            const dvcStatus = tryCommand("dvc", ["status"], { cwd });
+            const dvcStatus = tryDvc(["status"], { cwd });
             if ((dvcStatus.stdout || "").trim()) {
                 process.stdout.write(dvcStatus.stdout);
             }
@@ -88,7 +89,7 @@ export async function runRepo({ argv }) {
         });
 
         for (const filePath of dvcPaths) {
-            runCommand("dvc", ["add", filePath], { cwd });
+            runDvc(["add", filePath], { cwd });
         }
 
         const gitAddArgs = explicitPaths.length > 0 ? ["add", "-A", "--", ...explicitPaths] : ["add", "-A"];
@@ -119,7 +120,7 @@ export async function runRepo({ argv }) {
         const currentBranch = getCurrentBranch(cwd);
         const resolvedBranch = syncWorkspaceBranch(cwd, currentBranch);
         console.log("Pushing DVC data...");
-        runCommand("dvc", ["push"], { cwd });
+        runDvc(["push"], { cwd });
 
         const upstream = tryCommand("git", ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], { cwd });
         if (upstream.status === 0) {

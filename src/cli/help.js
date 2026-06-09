@@ -175,5 +175,6 @@ Options:
 Notes:
   macOS uses brew, Linux uses apt-get/dnf/yum, Windows uses winget.
   If automatic install fails, the command prints manual install commands.
+  If dvc is installed by pip but not on PATH, Mindreon falls back to python -m dvc.
 `);
 }

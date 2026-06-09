@@ -4,6 +4,7 @@ import { URL } from "node:url";
 import { readIni, writeIni } from "./ini.js";
 import { buildGitUrl, getFvsCredentials, lookupFvs, waitForRepoReady } from "./fvm.js";
 import { captureCommand, runCommand, tryCommand } from "./shell.js";
+import { runDvc } from "./dvc.js";
 import { loadConfig } from "../cli/config.js";
 
 const INTERNAL_DIRS = new Set([".git", ".dvc"]);
@@ -422,7 +423,7 @@ export async function connectWorkspace({ cwd, bindType, bindName, version }) {
 
     const dvcDir = path.join(cwd, ".dvc");
     if (!(await pathExists(dvcDir))) {
-        runCommand("dvc", ["init"], { cwd });
+        runDvc(["init"], { cwd });
     }
 
     await ensureDvcConfig(cwd, creds, fvsId);
@@ -481,7 +482,7 @@ export async function pullWorkspace(cwd) {
     const preferredBranch = getCurrentBranch(cwd) || workspaceConfig.fvc?.version || "";
     const branch = syncWorkspaceBranch(cwd, preferredBranch);
     await refreshWorkspaceCredentials(cwd);
-    runCommand("dvc", ["pull"], { cwd });
+    runDvc(["pull"], { cwd });
     return { branch };
 }
 

@@ -1,6 +1,8 @@
 import process from "node:process";
 import { parseArgs } from "../cli/args.js";
 import { commandExists, runCommand, tryCommand } from "../utils/shell.js";
+import { hasDvc } from "../utils/dvc.js";
+import { ensurePythonUserScriptsOnPath, getPythonCommand } from "../utils/python.js";
 
 const WINDOWS_PACKAGE_IDS = {
     git: "Git.Git",
@@ -42,32 +44,6 @@ const DVC_PATH_HINTS = {
 
 function hasGitLfs() {
     return tryCommand("git", ["lfs", "version"]).status === 0;
-}
-
-function hasDvc() {
-    return tryCommand("dvc", ["version"]).status === 0;
-}
-
-function getPythonCommand() {
-    const candidates =
-        process.platform === "win32"
-            ? [
-                { command: "python", prefixArgs: [] },
-                { command: "py", prefixArgs: ["-3"] },
-                { command: "python3", prefixArgs: [] },
-            ]
-            : [
-                { command: "python3", prefixArgs: [] },
-                { command: "python", prefixArgs: [] },
-            ];
-
-    for (const candidate of candidates) {
-        if (tryCommand(candidate.command, [...candidate.prefixArgs, "--version"]).status === 0) {
-            return candidate;
-        }
-    }
-
-    return null;
 }
 
 function hasPython3() {
@@ -227,6 +203,7 @@ function installDvc() {
 
     let result = tryCommand(python.command, [...python.prefixArgs, ...installArgs]);
     if (result.status === 0) {
+        ensurePythonUserScriptsOnPath();
         return;
     }
 
@@ -237,6 +214,7 @@ function installDvc() {
                 ? [...baseArgs, "--break-system-packages", "dvc[s3]"]
                 : [...baseArgs, "--user", "--break-system-packages", "dvc[s3]"];
         runCommand(python.command, [...python.prefixArgs, ...retryArgs]);
+        ensurePythonUserScriptsOnPath();
         return;
     }
 
