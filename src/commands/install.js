@@ -1,6 +1,6 @@
 import process from "node:process";
 import { parseArgs } from "../cli/args.js";
-import { commandExists, runCommand, tryCommand } from "../utils/shell.js";
+import { commandExists, runCommand, runCommandStreaming, tryCommand } from "../utils/shell.js";
 import { hasDvc } from "../utils/dvc.js";
 import { ensurePythonUserScriptsOnPath, getPythonCommand } from "../utils/python.js";
 
@@ -189,7 +189,11 @@ function installSystemPackages(packageManager, missingPackages) {
     throw new Error("Unsupported platform or missing package manager. Install git, git-lfs, python3, and dvc[s3] manually.");
 }
 
-function installDvc() {
+function formatCommand(command, args) {
+    return [command, ...args].join(" ");
+}
+
+async function installDvc() {
     const python = getPythonCommand();
     if (python === null) {
         throw new Error(`Python 3 is required to install dvc[s3].\n${formatManualInstallAdvice()}`);
@@ -201,7 +205,9 @@ function installDvc() {
             ? [...baseArgs, "dvc[s3]"]
             : [...baseArgs, "--user", "dvc[s3]"];
 
-    let result = tryCommand(python.command, [...python.prefixArgs, ...installArgs]);
+    console.log(`Running: ${formatCommand(python.command, [...python.prefixArgs, ...installArgs])}`);
+    console.log("Pip output:");
+    let result = await runCommandStreaming(python.command, [...python.prefixArgs, ...installArgs]);
     if (result.status === 0) {
         ensurePythonUserScriptsOnPath();
         return;
@@ -213,7 +219,15 @@ function installDvc() {
             typeof process.getuid === "function" && process.getuid() === 0
                 ? [...baseArgs, "--break-system-packages", "dvc[s3]"]
                 : [...baseArgs, "--user", "--break-system-packages", "dvc[s3]"];
-        runCommand(python.command, [...python.prefixArgs, ...retryArgs]);
+        console.log("Retrying with --break-system-packages because this Python environment is externally managed.");
+        console.log(`Running: ${formatCommand(python.command, [...python.prefixArgs, ...retryArgs])}`);
+        result = await runCommandStreaming(python.command, [...python.prefixArgs, ...retryArgs]);
+        if (result.status !== 0) {
+            const retryStderr = `${result.stderr || ""}\n${result.stdout || ""}`;
+            throw new Error(
+                `${retryStderr.trim() || "Failed to install dvc[s3]."}\n${formatManualInstallAdvice()}`
+            );
+        }
         ensurePythonUserScriptsOnPath();
         return;
     }
@@ -254,7 +268,7 @@ export async function runInstall({ argv }) {
 
     if (!hasDvc()) {
         console.log("Installing dvc[s3]...");
-        installDvc();
+        await installDvc();
         if (!hasDvc()) {
             throw new Error(`dvc is still unavailable after installation.\n${getDvcPathHint()}\n${formatManualInstallAdvice(packageManager)}`);
         }

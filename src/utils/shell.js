@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import process from "node:process";
 
 function normalizeOptions(options = {}) {
@@ -52,6 +52,37 @@ export function tryCommand(command, args = [], options = {}) {
     return spawnSync(command, args, {
         ...normalizeOptions(options),
         stdio: ["ignore", "pipe", "pipe"],
+    });
+}
+
+export function runCommandStreaming(command, args = [], options = {}) {
+    const normalizedOptions = normalizeOptions(options);
+    return new Promise((resolve, reject) => {
+        const child = spawn(command, args, {
+            cwd: normalizedOptions.cwd,
+            env: normalizedOptions.env,
+            shell: options.shell || false,
+            windowsHide: true,
+            stdio: ["ignore", "pipe", "pipe"],
+        });
+
+        let stdout = "";
+        let stderr = "";
+
+        child.stdout.on("data", (chunk) => {
+            process.stdout.write(chunk);
+            stdout += chunk;
+        });
+
+        child.stderr.on("data", (chunk) => {
+            process.stderr.write(chunk);
+            stderr += chunk;
+        });
+
+        child.on("error", reject);
+        child.on("close", (status, signal) => {
+            resolve({ status, signal, stdout, stderr });
+        });
     });
 }
 

@@ -122,6 +122,7 @@ mindreon image copy --from docker.io/library/nginx:latest --to harbor.example.co
 - 已安装的依赖会自动跳过
 - macOS 使用 `brew`，Linux 使用 `apt-get` / `dnf` / `yum`，Windows 使用 `winget`
 - 如果自动安装失败，命令会输出当前平台的手动安装建议
+- DVC 的 pip 安装过程会实时输出日志
 - 如果 `dvc` 已通过 pip 安装但当前终端 PATH 还没生效，Mindreon CLI 会自动 fallback 到 `python -m dvc`
 - 在 Debian / Ubuntu 这类启用了 PEP 668 的环境里，命令会在必要时自动改用 `pip --break-system-packages`
 
