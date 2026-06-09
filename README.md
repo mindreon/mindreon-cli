@@ -120,6 +120,8 @@ mindreon image copy --from docker.io/library/nginx:latest --to harbor.example.co
 说明：
 
 - 已安装的依赖会自动跳过
+- macOS 使用 `brew`，Linux 使用 `apt-get` / `dnf` / `yum`，Windows 使用 `winget`
+- 如果自动安装失败，命令会输出当前平台的手动安装建议
 - 在 Debian / Ubuntu 这类启用了 PEP 668 的环境里，命令会在必要时自动改用 `pip --break-system-packages`
 
 如果你想先只看依赖状态：
@@ -159,6 +161,29 @@ pipx install "dvc[s3]"
 ```bash
 sudo dnf install -y git git-lfs python3 python3-pip
 python3 -m pip install --user "dvc[s3]"
+git lfs install
+```
+
+- Windows
+
+```powershell
+winget install --id Git.Git --exact --source winget
+winget install --id GitHub.GitLFS --exact --source winget
+winget install --id Python.Python.3.13 --exact --source winget
+python -m pip install --user "dvc[s3]"
+git lfs install
+```
+
+如果 `winget` 不可用，可以手动下载安装：
+
+- Git: https://git-scm.com/download/win
+- Git LFS: https://git-lfs.com/
+- Python: https://www.python.org/downloads/windows/
+
+安装后重新打开终端，再执行：
+
+```powershell
+python -m pip install --user "dvc[s3]"
 git lfs install
 ```
 

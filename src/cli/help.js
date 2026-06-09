@@ -171,5 +171,9 @@ Options:
   --check                Only print dependency status, do not install
   --skip-skopeo          Do not install optional skopeo
   -h, --help             Show this help message
+
+Notes:
+  macOS uses brew, Linux uses apt-get/dnf/yum, Windows uses winget.
+  If automatic install fails, the command prints manual install commands.
 `);
 }

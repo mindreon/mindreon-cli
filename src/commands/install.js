@@ -2,6 +2,44 @@ import process from "node:process";
 import { parseArgs } from "../cli/args.js";
 import { commandExists, runCommand, tryCommand } from "../utils/shell.js";
 
+const WINDOWS_PACKAGE_IDS = {
+    git: "Git.Git",
+    "git-lfs": "GitHub.GitLFS",
+    python3: "Python.Python.3.13",
+    "python3-pip": "Python.Python.3.13",
+};
+
+const MANUAL_INSTALL_COMMANDS = {
+    darwin: [
+        "brew install git git-lfs python3",
+        'python3 -m pip install --user "dvc[s3]"',
+        "git lfs install",
+    ],
+    linuxApt: [
+        "sudo apt-get update",
+        "sudo apt-get install -y git git-lfs python3 python3-pip",
+        'python3 -m pip install --user --break-system-packages "dvc[s3]"',
+        "git lfs install",
+    ],
+    linuxDnf: [
+        "sudo dnf install -y git git-lfs python3 python3-pip",
+        'python3 -m pip install --user "dvc[s3]"',
+        "git lfs install",
+    ],
+    win32: [
+        "winget install --id Git.Git --exact --source winget",
+        "winget install --id GitHub.GitLFS --exact --source winget",
+        "winget install --id Python.Python.3.13 --exact --source winget",
+        'python -m pip install --user "dvc[s3]"',
+        "git lfs install",
+    ],
+};
+
+const DVC_PATH_HINTS = {
+    win32: "If pip installed dvc but the dvc command is unavailable, add %APPDATA%\\Python\\Python313\\Scripts to PATH and reopen the terminal.",
+    default: "If pip installed dvc but the dvc command is unavailable, add your Python user bin directory to PATH and reopen the terminal.",
+};
+
 function hasGitLfs() {
     return tryCommand("git", ["lfs", "version"]).status === 0;
 }
@@ -10,12 +48,35 @@ function hasDvc() {
     return tryCommand("dvc", ["version"]).status === 0;
 }
 
+function getPythonCommand() {
+    const candidates =
+        process.platform === "win32"
+            ? [
+                { command: "python", prefixArgs: [] },
+                { command: "py", prefixArgs: ["-3"] },
+                { command: "python3", prefixArgs: [] },
+            ]
+            : [
+                { command: "python3", prefixArgs: [] },
+                { command: "python", prefixArgs: [] },
+            ];
+
+    for (const candidate of candidates) {
+        if (tryCommand(candidate.command, [...candidate.prefixArgs, "--version"]).status === 0) {
+            return candidate;
+        }
+    }
+
+    return null;
+}
+
 function hasPython3() {
-    return commandExists("python3");
+    return getPythonCommand() !== null;
 }
 
 function hasPipForPython3() {
-    return tryCommand("python3", ["-m", "pip", "--version"]).status === 0;
+    const python = getPythonCommand();
+    return python !== null && tryCommand(python.command, [...python.prefixArgs, "-m", "pip", "--version"]).status === 0;
 }
 
 function hasSkopeo() {
@@ -40,6 +101,9 @@ function runMaybeSudo(command, args) {
 }
 
 function detectPackageManager() {
+    if (process.platform === "win32" && commandExists("winget")) {
+        return "winget";
+    }
     if (process.platform === "darwin" && commandExists("brew")) {
         return "brew";
     }
@@ -53,6 +117,37 @@ function detectPackageManager() {
         return "yum";
     }
     return "";
+}
+
+function getManualInstallCommands(packageManager = detectPackageManager()) {
+    if (process.platform === "win32") {
+        return MANUAL_INSTALL_COMMANDS.win32;
+    }
+    if (process.platform === "darwin") {
+        return MANUAL_INSTALL_COMMANDS.darwin;
+    }
+    if (process.platform === "linux" && packageManager === "apt-get") {
+        return MANUAL_INSTALL_COMMANDS.linuxApt;
+    }
+    if (process.platform === "linux") {
+        return MANUAL_INSTALL_COMMANDS.linuxDnf;
+    }
+    return [
+        "Install git, git-lfs, Python 3, pip, and dvc[s3] with your system package manager.",
+        'python3 -m pip install --user "dvc[s3]"',
+        "git lfs install",
+    ];
+}
+
+function formatManualInstallAdvice(packageManager = detectPackageManager()) {
+    return [
+        "Manual install commands:",
+        ...getManualInstallCommands(packageManager).map((command) => `  ${command}`),
+    ].join("\n");
+}
+
+function getDvcPathHint() {
+    return DVC_PATH_HINTS[process.platform] || DVC_PATH_HINTS.default;
 }
 
 function getStatusRows() {
@@ -98,13 +193,30 @@ function installSystemPackages(packageManager, missingPackages) {
         runMaybeSudo("yum", ["install", "-y", ...missingPackages]);
         return;
     }
+    if (packageManager === "winget") {
+        const packageIds = [...new Set(missingPackages.map((name) => WINDOWS_PACKAGE_IDS[name] || name))];
+        for (const packageId of packageIds) {
+            runCommand("winget", [
+                "install",
+                "--id",
+                packageId,
+                "--exact",
+                "--source",
+                "winget",
+                "--accept-package-agreements",
+                "--accept-source-agreements",
+            ]);
+        }
+        return;
+    }
 
     throw new Error("Unsupported platform or missing package manager. Install git, git-lfs, python3, and dvc[s3] manually.");
 }
 
 function installDvc() {
-    if (!hasPython3()) {
-        throw new Error("python3 is required to install dvc[s3].");
+    const python = getPythonCommand();
+    if (python === null) {
+        throw new Error(`Python 3 is required to install dvc[s3].\n${formatManualInstallAdvice()}`);
     }
 
     const baseArgs = ["-m", "pip", "install"];
@@ -113,7 +225,7 @@ function installDvc() {
             ? [...baseArgs, "dvc[s3]"]
             : [...baseArgs, "--user", "dvc[s3]"];
 
-    let result = tryCommand("python3", installArgs);
+    let result = tryCommand(python.command, [...python.prefixArgs, ...installArgs]);
     if (result.status === 0) {
         return;
     }
@@ -124,12 +236,12 @@ function installDvc() {
             typeof process.getuid === "function" && process.getuid() === 0
                 ? [...baseArgs, "--break-system-packages", "dvc[s3]"]
                 : [...baseArgs, "--user", "--break-system-packages", "dvc[s3]"];
-        runCommand("python3", retryArgs);
+        runCommand(python.command, [...python.prefixArgs, ...retryArgs]);
         return;
     }
 
     throw new Error(
-        stderr.trim() || "Failed to install dvc[s3]."
+        `${stderr.trim() || "Failed to install dvc[s3]."}\n${formatManualInstallAdvice()}`
     );
 }
 
@@ -152,7 +264,12 @@ export async function runInstall({ argv }) {
 
     if (missingSystemPackages.length > 0) {
         console.log(`Installing missing system packages: ${missingSystemPackages.join(", ")}`);
-        installSystemPackages(packageManager, missingSystemPackages);
+        try {
+            installSystemPackages(packageManager, missingSystemPackages);
+        } catch (error) {
+            const message = error?.message || String(error);
+            throw new Error(`${message}\n\n${formatManualInstallAdvice(packageManager)}`);
+        }
     } else {
         console.log("All required system packages are already installed.");
     }
@@ -160,12 +277,15 @@ export async function runInstall({ argv }) {
     if (!hasDvc()) {
         console.log("Installing dvc[s3]...");
         installDvc();
+        if (!hasDvc()) {
+            throw new Error(`dvc is still unavailable after installation.\n${getDvcPathHint()}\n${formatManualInstallAdvice(packageManager)}`);
+        }
     } else {
         console.log("dvc is already installed.");
     }
 
     if (!hasGitLfs()) {
-        throw new Error("git-lfs is still unavailable after installation.");
+        throw new Error(`git-lfs is still unavailable after installation.\n${formatManualInstallAdvice(packageManager)}`);
     }
 
     if (commandExists("git")) {

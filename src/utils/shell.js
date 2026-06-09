@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import process from "node:process";
 
 function normalizeOptions(options = {}) {
     return {
@@ -55,7 +56,9 @@ export function tryCommand(command, args = [], options = {}) {
 }
 
 export function commandExists(command) {
-    const result = spawnSync("bash", ["-lc", `command -v ${command}`], {
+    const lookupCommand = process.platform === "win32" ? "where" : "bash";
+    const lookupArgs = process.platform === "win32" ? [command] : ["-lc", `command -v ${command}`];
+    const result = spawnSync(lookupCommand, lookupArgs, {
         encoding: "utf-8",
         stdio: ["ignore", "pipe", "pipe"],
     });
