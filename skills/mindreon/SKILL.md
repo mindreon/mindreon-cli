@@ -31,26 +31,27 @@ mindreon login --username <USERNAME> --password <PASSWORD> [--url https://dev-4-
 ### 2. 模型管理 (Model Management)
 创建模型：
 ```bash
-mindreon model create --name "my-cool-model" --description "A fresh new model"
-mindreon model create --name "builtin-qwen" --description "Preset model" --source "preset"
+mindreon create --model "my-cool-model" --description "A fresh new model"
+mindreon create --model "builtin-qwen" --description "Preset model" --preset
 ```
 创建版本（branch）：
 ```bash
-mindreon model version create --name "my-cool-model" --version "v1.0.0" --base "main"
+mindreon create version --model "my-cool-model" --version "v1.0.0" --base "main"
 ```
 连接本地目录到模型版本：
 ```bash
 cd /path/to/workspace
-mindreon model connect --name "my-cool-model" --version "v1.0.0"
+mindreon connect --model "my-cool-model" --version "v1.0.0"
 ```
 
 ### 3. 数据集管理 (Dataset Management)
 创建数据集与发布版本的逻辑同上：
 ```bash
-mindreon dataset create --name "my-test-data"
-mindreon dataset version create --name "my-test-data" --version "v1" --base "main"
+mindreon create --dataset "my-test-data"
+mindreon create --dataset "coco8" --description "Preset dataset" --preset
+mindreon create version --dataset "my-test-data" --version "v1" --base "main"
 cd /path/to/workspace
-mindreon dataset connect --name "my-test-data" --version "v1"
+mindreon connect --dataset "my-test-data" --version "v1"
 ```
 
 ### 4. 本地仓库工作流 (Local Repo Workflow)

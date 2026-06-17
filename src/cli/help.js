@@ -47,8 +47,9 @@ Options:
   --dataset <name>               Target dataset name
   --displayName <name>           Display name for resource creation
   --description <desc>           Description for resource creation
-  --source <pageUpload|preset|taskPublish>
-                                 Model source when creating a model
+  --preset                       Create a platform preset resource
+  --source <custom|preset|taskPublish>
+                                 Resource source. Defaults to custom. taskPublish is model-only.
   --version <version>            Version name for version creation
   --base <branch>                Base branch for version creation
   -h, --help                     Show this help message
@@ -58,8 +59,9 @@ Notes:
 
 Examples:
   mindreon create --model my-model
-  mindreon create --model builtin-qwen --source preset
+  mindreon create --model builtin-qwen --preset
   mindreon create --dataset my-dataset
+  mindreon create --dataset coco8 --preset
   mindreon create version --model my-model --version v1 --base main
   mindreon create version --dataset my-dataset --version v1 --base main
 `);

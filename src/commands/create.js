@@ -5,19 +5,32 @@ import { getServicePrefix } from "../utils/routes.js";
 import { resolveResourceTarget } from "../utils/resource-target.js";
 import { lookupFvs, waitForRepoReady } from "../utils/fvm.js";
 
-function normalizeModelSourceArg(raw) {
-    if (!raw) {
-        return "";
-    }
-
+function normalizeResourceSourceArg(args, resourceType) {
+    const raw = args.source || "";
+    const preset = args.preset === true || String(args.preset).toLowerCase() === "true";
     const sourceMap = new Map([
-        ["pageupload", "pageUpload"],
+        ["custom", "custom"],
+        ["pageupload", "custom"],
         ["preset", "preset"],
         ["taskpublish", "taskPublish"],
     ]);
-    const normalized = sourceMap.get(String(raw).trim().toLowerCase());
+
+    let normalized = sourceMap.get(String(raw).trim().toLowerCase()) || "";
+    if (raw && !normalized) {
+        const supported = resourceType === "model" ? "custom, preset, taskPublish" : "custom, preset";
+        throw new Error(`Unsupported ${resourceType} source. Use one of: ${supported}`);
+    }
+    if (resourceType === "dataset" && normalized === "taskPublish") {
+        throw new Error("Unsupported dataset source. Use one of: custom, preset");
+    }
+    if (preset && normalized && normalized !== "preset") {
+        throw new Error("--preset conflicts with --source. Use --preset or --source preset, not both.");
+    }
+    if (preset) {
+        normalized = "preset";
+    }
     if (!normalized) {
-        throw new Error("Unsupported model source. Use one of: pageUpload, preset, taskPublish");
+        normalized = "custom";
     }
     return normalized;
 }
@@ -36,7 +49,7 @@ async function createResource(args, resourceTarget) {
     const description = args.description || "";
 
     if (resourceTarget.resourceType === "model") {
-        const source = normalizeModelSourceArg(args.source);
+        const source = normalizeResourceSourceArg(args, resourceTarget.resourceType);
         console.log(`Creating model: ${resourceTarget.resourceName}`);
         const response = await request(`${apiPrefixes.model}/api/v1/models`, {
             method: "POST",
@@ -44,7 +57,7 @@ async function createResource(args, resourceTarget) {
                 name: resourceTarget.resourceName,
                 displayName,
                 description,
-                ...(source ? { source } : {}),
+                source,
             },
         });
 
@@ -56,6 +69,7 @@ async function createResource(args, resourceTarget) {
         return;
     }
 
+    const source = normalizeResourceSourceArg(args, resourceTarget.resourceType);
     console.log(`Creating dataset: ${resourceTarget.resourceName}`);
     const response = await request(`${apiPrefixes.dataset}/api/v1/datasets`, {
         method: "POST",
@@ -63,6 +77,7 @@ async function createResource(args, resourceTarget) {
             name: resourceTarget.resourceName,
             displayName,
             description,
+            source,
         },
     });
 

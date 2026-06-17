@@ -428,7 +428,7 @@ mindreon repo push
 
 ```bash
 mindreon create --model "my-model" --description "demo model"
-mindreon create --model "builtin-qwen" --description "preset model" --source "preset"
+mindreon create --model "builtin-qwen" --description "preset model" --preset
 mindreon create version --model "my-model" --version "v1" --base "main"
 ```
 
@@ -436,8 +436,11 @@ mindreon create version --model "my-model" --version "v1" --base "main"
 
 ```bash
 mindreon create --dataset "my-dataset"
+mindreon create --dataset "coco8" --description "preset dataset" --preset
 mindreon create version --dataset "my-dataset" --version "v1" --base "main"
 ```
+
+不传 `--preset` 时，CLI 默认按 `source=custom` 创建资源；`--preset` 等价于 `--source preset`。
 
 ## 其他命令
 

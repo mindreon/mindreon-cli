@@ -17,8 +17,9 @@ export async function request(endpoint, options = {}) {
 
     // Load auth token if available unless explicitly disabled
     if (!options.skipAuth) {
-        if (config.token) {
-            headers.set("Authorization", `Bearer ${config.token}`);
+        const token = process.env.MINDREON_AUTH_TOKEN || config.token;
+        if (token) {
+            headers.set("Authorization", `Bearer ${token}`);
         }
     }
 

@@ -12,7 +12,7 @@ const DEFAULT_REPO_READY_INTERVAL_MS = 2000;
 export async function getMindreonContext() {
     const config = await loadConfig();
     const fvmBaseUrl = resolveServiceBaseUrl("fvm", config);
-    const token = config.token || "";
+    const token = process.env.MINDREON_AUTH_TOKEN || config.token || "";
     const explicitExternal = String(process.env.MINDREON_FVM_EXTERNAL || "").trim().toLowerCase();
     const externalEndpoints =
         explicitExternal === "true" || explicitExternal === "1"
@@ -39,6 +39,9 @@ export async function ensureLoggedIn() {
 
 export async function getGitAccessToken({ forceRefresh = false } = {}) {
     const context = await ensureLoggedIn();
+    if (process.env.MINDREON_GIT_ACCESS_TOKEN) {
+        return process.env.MINDREON_GIT_ACCESS_TOKEN;
+    }
     if (!forceRefresh && context.config.gitAccessToken) {
         return context.config.gitAccessToken;
     }
