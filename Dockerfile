@@ -1,4 +1,4 @@
-FROM node:24-bookworm
+FROM harbor.mindreon.com/ops/node:24-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_BREAK_SYSTEM_PACKAGES=1 \
