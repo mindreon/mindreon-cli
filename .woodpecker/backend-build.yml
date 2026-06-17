@@ -5,9 +5,9 @@ clone:
   git:
     image: harbor.mindreon.com/ops/woodpeckerci/plugin-git:latest
     environment:
-      CI_NETRC_MACHINE: github.com
-      CI_NETRC_USERNAME: { from_secret: github_username }
-      CI_NETRC_PASSWORD: { from_secret: github_password }
+      CI_NETRC_MACHINE: gitlab.mindreon.com
+      CI_NETRC_USERNAME: { from_secret: gitlab_username }
+      CI_NETRC_PASSWORD: { from_secret: gitlab_password }
 
 matrix:
   include:
