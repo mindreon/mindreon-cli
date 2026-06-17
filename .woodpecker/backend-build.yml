@@ -1,0 +1,63 @@
+# =========================================================================
+# CLI 镜像构建 Workflow (amd64 + arm64 并行)
+# =========================================================================
+clone:
+  git:
+    image: harbor.mindreon.com/ops/woodpeckerci/plugin-git:latest
+    environment:
+      CI_NETRC_MACHINE: github.com
+      CI_NETRC_USERNAME: { from_secret: github_username }
+      CI_NETRC_PASSWORD: { from_secret: github_password }
+
+matrix:
+  include:
+    - PLATFORM: linux/amd64
+      ARCH: amd64
+    - PLATFORM: linux/arm64
+      ARCH: arm64
+
+labels:
+  platform: ${PLATFORM}
+
+steps:
+  build-cli-branch:
+    image: harbor.mindreon.com/ops/woodpeckerci/plugin-docker-buildx:6.0
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    settings:
+      dockerfile: Dockerfile
+      repo: harbor.mindreon.com/baize/mindreon-cli
+      registry: harbor.mindreon.com
+      username: { from_secret: harbor_username }
+      password: { from_secret: harbor_password }
+      cache: true
+      daemon_off: true
+      platforms:
+        - ${PLATFORM}
+      provenance: false
+      auto_tag: false
+      tags:
+        - ${CI_COMMIT_BRANCH//\//-}-${ARCH}
+    when:
+      event: [push, manual]
+
+  build-cli-tag:
+    image: harbor.mindreon.com/ops/woodpeckerci/plugin-docker-buildx:6.0
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    settings:
+      dockerfile: Dockerfile
+      repo: harbor.mindreon.com/baize/mindreon-cli
+      registry: harbor.mindreon.com
+      username: { from_secret: harbor_username }
+      password: { from_secret: harbor_password }
+      cache: true
+      daemon_off: true
+      platforms:
+        - ${PLATFORM}
+      provenance: false
+      tags: ${CI_COMMIT_TAG}-${ARCH}
+    when:
+      event: tag

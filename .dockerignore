@@ -2,10 +2,13 @@
 .github
 .idea
 .tmp
+.woodpecker
 bin
 node_modules
 tmp
 *.tgz
+npm-debug.log*
+.DS_Store
 ai-nexus
 dataset-service
 falsework

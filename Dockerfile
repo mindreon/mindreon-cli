@@ -2,9 +2,16 @@ FROM node:24-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_BREAK_SYSTEM_PACKAGES=1 \
-    NPM_CONFIG_UPDATE_NOTIFIER=false
+    NPM_CONFIG_UPDATE_NOTIFIER=false \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple \
+    PIP_TRUSTED_HOST=pypi.tuna.tsinghua.edu.cn
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN sed -i \
+      -e 's#http://deb.debian.org/debian#https://mirrors.tuna.tsinghua.edu.cn/debian#g' \
+      -e 's#http://deb.debian.org/debian-security#https://mirrors.tuna.tsinghua.edu.cn/debian-security#g' \
+      /etc/apt/sources.list.d/debian.sources && \
+    apt-get update && apt-get install -y --no-install-recommends \
     bash \
     ca-certificates \
     git \
@@ -16,15 +23,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git lfs install --system
-RUN python3 -m pip install --no-cache-dir --break-system-packages "dvc[s3]"
+RUN python3 -m pip install --break-system-packages "dvc[s3]"
 
 WORKDIR /opt/mindreon-cli
 
-COPY package.json package-lock.json README.md npm.md ./
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY README.md npm.md ./
 COPY src ./src
 COPY skills ./skills
 
-RUN npm install -g .
+RUN npm install -g . --omit=dev
 
 RUN mkdir -p /workspace && chown -R node:node /opt/mindreon-cli /workspace
 
