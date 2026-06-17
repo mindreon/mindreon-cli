@@ -5,27 +5,10 @@ import { resolveBaseUrl } from "../api/client.js";
 import { loadConfig } from "../cli/config.js";
 import { getServicePrefix } from "../utils/routes.js";
 
-// A custom fetch wrapper that gets raw response to read headers
-async function fetchRaw(endpoint, options = {}) {
-    const config = await loadConfig();
-    const baseUrl = resolveBaseUrl(config);
-
-    const headers = new Headers();
-    if (config.token) {
-        headers.set("Authorization", `Bearer ${config.token}`);
-    }
-    if (options.headers) {
-        Object.entries(options.headers).forEach(([k, v]) => headers.set(k, v));
-    }
-
-    const url = `${baseUrl}${endpoint}`;
-    const response = await fetch(url, {
-        method: options.method || "GET",
-        headers,
-        body: options.body
-    });
-
-    return response;
+function buildTusMeta(pairs) {
+    return Object.entries(pairs)
+        .map(([k, v]) => `${k} ${Buffer.from(String(v)).toString("base64")}`)
+        .join(",");
 }
 
 export async function runFile({ argv }) {
@@ -34,80 +17,90 @@ export async function runFile({ argv }) {
 
     if (subCommand === "upload") {
         const filePath = args._[1];
-        const bucket = args.bucket || args.b || "files";
-        const config = await loadConfig();
-        const filesPrefix = getServicePrefix("files", resolveBaseUrl(config));
-
         if (!filePath) {
-            throw new Error("Usage: mindreon file upload <file_path> [--bucket <bucket>]");
+            throw new Error("Usage: mindreon file upload <file_path> [--scope personal|project] [--remote-path /path]");
+        }
+
+        const scope = args.scope || "personal";
+        const remotePath = args["remote-path"] || args.path || `/${path.basename(filePath)}`;
+
+        const config = await loadConfig();
+        const baseUrl = resolveBaseUrl(config);
+        const prefix = getServicePrefix("file-center", baseUrl);
+        const token = process.env.MINDREON_AUTH_TOKEN || config.token || "";
+
+        if (!token) {
+            throw new Error("Not logged in. Run 'mindreon login' first.");
         }
 
         const stat = await fs.stat(filePath);
         const fileName = path.basename(filePath);
 
-        // TUS create
-        const metaStr = `filename ${Buffer.from(fileName).toString("base64")}`;
-        const createResp = await fetchRaw(`${filesPrefix}/uploads/${bucket}/`, {
+        const meta = buildTusMeta({
+            scope,
+            relativePath: remotePath,
+            override: "true",
+        });
+
+        // TUS Create
+        const createResp = await fetch(`${baseUrl}${prefix}/api/v1/tus/`, {
             method: "POST",
             headers: {
+                "Authorization": `Bearer ${token}`,
                 "Tus-Resumable": "1.0.0",
-                "Upload-Length": stat.size.toString(),
-                "Upload-Metadata": metaStr
-            }
+                "Upload-Length": String(stat.size),
+                "Upload-Metadata": meta,
+                "Content-Length": "0",
+            },
         });
 
         if (createResp.status !== 201) {
-            throw new Error(`Failed to create TUS upload: ${createResp.status} ${createResp.statusText}`);
+            const text = await createResp.text();
+            throw new Error(`TUS create failed (${createResp.status}): ${text.slice(0, 200)}`);
         }
 
-        let location = createResp.headers.get("Location");
-        if (!location) {
-            throw new Error("Missing Location header in TUS create response");
+        const rawLocation = createResp.headers.get("location") || "";
+        // The gateway strips the service prefix from the Location header returned by file-center TUS.
+        // e.g. Location: https://host/api/v1/tus/<id>  →  needs to become /file-center/api/v1/tus/<id>
+        let patchUrl;
+        if (rawLocation.startsWith("http")) {
+            const locPath = new URL(rawLocation).pathname;
+            patchUrl = locPath.startsWith(prefix)
+                ? rawLocation
+                : `${baseUrl}${prefix}${locPath}`;
+        } else {
+            patchUrl = `${baseUrl}${rawLocation}`;
         }
 
-        // If location is full URL, extract path
-        if (location.startsWith("http")) {
-            const urlObj = new URL(location);
-            location = urlObj.pathname;
-        }
-        // ensure prefix
-        if (!location.startsWith(filesPrefix)) {
-            if (location.startsWith("/uploads/")) {
-                location = `${filesPrefix}${location}`;
-            }
-        }
+        process.stdout.write(`Uploading ${fileName} (${(stat.size / 1024 / 1024).toFixed(1)} MB)...\n`);
 
-        console.log(`Created TUS upload task: ${location}`);
-
-        // Read file and PATCH
-        const fileBuffer = await fs.readFile(filePath);
-        const patchResp = await fetchRaw(location, {
+        // TUS Patch
+        const fileData = await fs.readFile(filePath);
+        const patchResp = await fetch(patchUrl, {
             method: "PATCH",
             headers: {
+                "Authorization": `Bearer ${token}`,
                 "Tus-Resumable": "1.0.0",
                 "Upload-Offset": "0",
-                "Content-Type": "application/offset+octet-stream"
+                "Content-Type": "application/offset+octet-stream",
+                "Content-Length": String(stat.size),
             },
-            body: fileBuffer
+            body: fileData,
         });
 
         if (patchResp.status !== 204) {
-            throw new Error(`Failed to upload file chunks: ${patchResp.status} ${patchResp.statusText}`);
+            const text = await patchResp.text();
+            throw new Error(`TUS patch failed (${patchResp.status}): ${text.slice(0, 200)}`);
         }
 
-        // Now format the internal location expected by other services like model-service
-        // e.g. "s3://..." or "http://file-server/..." based on your typical infra.
-        // If the services just expect the location string returned for FVM appending,
-        // We return it for the user/agent. However FVM typically wants `location: string`.
-        // We output the file location as simple format.
-        const fileId = location.split("/").pop();
+        const downloadUrl = `${baseUrl}${prefix}/api/v1/resources/download?scope=${scope}&paths=${encodeURIComponent(remotePath)}`;
 
-        const finalLocation = `file-server://${bucket}/${fileId}`;
         console.log(`Successfully uploaded: ${fileName}`);
-        console.log(`Location: ${finalLocation}`);
+        console.log(`Remote path: ${remotePath}`);
+        console.log(`Download URL: ${downloadUrl}`);
 
-        return { location: finalLocation };
+        return { url: downloadUrl, path: remotePath, scope };
     }
 
-    throw new Error(`Unknown file command: ${subCommand}`);
+    throw new Error(`Unknown file command: ${subCommand}. Available: upload`);
 }

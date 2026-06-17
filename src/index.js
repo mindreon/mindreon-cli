@@ -5,6 +5,7 @@ import {
     printConnectHelp,
     printCreateHelp,
     printDownloadHelp,
+    printFileHelp,
     printImageHelp,
     printInstallHelp,
     printLoginHelp,
@@ -14,6 +15,7 @@ import {
 import { runConnect } from "./commands/connect.js";
 import { runCreate } from "./commands/create.js";
 import { runDownload } from "./commands/download.js";
+import { runFile } from "./commands/file.js";
 import { runLogin } from "./commands/login.js";
 import { runInstall } from "./commands/install.js";
 import { runRepo } from "./commands/repo.js";
@@ -43,6 +45,7 @@ function printCommandHelp(command) {
     if (command === "connect") return printConnectHelp();
     if (command === "download") return printDownloadHelp();
     if (command === "repo") return printRepoHelp();
+    if (command === "file") return printFileHelp();
     if (command === "image") return printImageHelp();
     if (command === "release") return printReleaseHelp();
     return printRootHelp();
@@ -105,6 +108,15 @@ try {
             process.exit(0);
         }
         await runRepo({ argv: argvWithoutCommand, env: process.env });
+        process.exit(0);
+    }
+
+    if (command === "file") {
+        if (argvWithoutCommand.length === 0 || hasHelpFlag(argvWithoutCommand)) {
+            printFileHelp();
+            process.exit(0);
+        }
+        await runFile({ argv: argvWithoutCommand, env: process.env });
         process.exit(0);
     }
 

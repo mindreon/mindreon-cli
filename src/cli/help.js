@@ -15,6 +15,7 @@ Commands:
   connect       Initialize a local model or dataset workspace
   download      Create a workspace directory and pull remote content
   repo          Local Git/DVC workspace operations
+  file          Upload files to the platform file center workspace
   image         Copy or push images between registries
   release       Maintainer command for CLI versioning and npm release
   help          Show this help message
@@ -111,27 +112,77 @@ Examples:
 `);
 }
 
+export function printFileHelp() {
+  process.stdout.write(`
+Usage: mindreon file upload <file_path> [options]
+
+Commands:
+  upload                         Upload a file to the personal or project workspace via TUS
+
+Options:
+  --scope <personal|project>     Target workspace scope (default: personal)
+  --remote-path <path>           Destination path within the workspace (default: /<filename>)
+  -h, --help                     Show this help message
+
+Output:
+  Prints the download URL that can be used as --file-url or --dockerfile-url
+  in 'mindreon image build'. The URL requires authentication (handled automatically
+  by the image build worker via its download headers).
+
+Examples:
+  mindreon file upload ./Dockerfile
+  mindreon file upload ./model.tar --remote-path /builds/model.tar
+  mindreon file upload ./postgres-17.tar --scope personal --remote-path /builds/postgres-17.tar
+`);
+}
+
 export function printImageHelp() {
   process.stdout.write(`
 Usage: mindreon image <src> <dst> [options]
        mindreon image copy <src> <dst> [options]
        mindreon image copy --from <src> --to <dst> [options]
+       mindreon image build --repo <repo> --tag <tag> --method <method> [options]
 
 Commands:
-  copy                           Copy an image from src to dst
+  copy                           Copy an image from src to dst using skopeo
+  build                          Create a build task on the Mindreon image service
 
-Options:
+copy options:
   --from <src>                   Source image reference
   --to <dst>                     Destination image reference
   --src-tls-verify <bool>        Verify source registry TLS (default: false)
   --dest-tls-verify <bool>       Verify destination registry TLS (default: false)
   --dry-run                      Print the skopeo command only, do not execute the copy
+
+build options:
+  --repo <name>                  Target repository name (short name, no project prefix) [required]
+  --tag <tag>                    Target image tag [required]
+  --method <method>              Build method: dockerfile | upload | registry_pull [required]
+  --visibility <private|public>  Image visibility (default: platform default)
+  --remarks <text>               Remarks or notes for this build
+  --tag-slugs <slug1,slug2>      Comma-separated Tag Engine slugs to register after build
+
+  dockerfile method:
+    --dockerfile-url <url>       URL of the Dockerfile to use for the build
+
+  upload method:
+    --file-url <url>             URL of the uploaded image tar file [required]
+
+  registry_pull method:
+    --source-image <image>       Source image reference to pull [required]
+    --source-username <user>     Source registry username
+    --source-password <password> Source registry password
+
   -h, --help                     Show this help message
 
 Examples:
   mindreon image docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
   mindreon image copy docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
   mindreon image copy --from quay.io/prometheus/prometheus:v2.54.1 --to harbor.example.com/ops/prometheus:v2.54.1
+  mindreon image build --repo myapp --tag v1.0.0 --method dockerfile --dockerfile-url https://example.com/Dockerfile
+  mindreon image build --repo myapp --tag v1.0.0 --method upload --file-url https://example.com/image.tar
+  mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image docker.io/library/nginx:latest
+  mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image registry.example.com/ns/app:v1 --source-username user --source-password secret
 `);
 }
 

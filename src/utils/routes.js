@@ -77,6 +77,12 @@ export function getServicePrefix(serviceName, baseUrl) {
     if (serviceName === "model") {
         return "/model-service";
     }
+    if (serviceName === "image") {
+        return "/isv";
+    }
+    if (serviceName === "file-center") {
+        return "/file-center";
+    }
 
     return "";
 }
