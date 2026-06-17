@@ -1,7 +1,7 @@
 import { parseArgs } from "../cli/args.js";
 import { request, resolveBaseUrl } from "../api/client.js";
 import { loadConfig } from "../cli/config.js";
-import { getServicePrefix } from "../utils/routes.js";
+import { getServicePrefix, resolveServiceBaseUrl } from "../utils/routes.js";
 import { resolveResourceTarget } from "../utils/resource-target.js";
 import { lookupFvs, waitForRepoReady } from "../utils/fvm.js";
 
@@ -35,24 +35,35 @@ function normalizeResourceSourceArg(args, resourceType) {
     return normalized;
 }
 
-async function getApiPrefixes() {
-    const baseUrl = resolveBaseUrl(await loadConfig());
+async function getApiContexts() {
+    const config = await loadConfig();
+    const defaultBaseUrl = resolveBaseUrl(config);
+    const datasetBaseUrl = resolveServiceBaseUrl("dataset", config) || defaultBaseUrl;
+    const modelBaseUrl = resolveServiceBaseUrl("model", config) || defaultBaseUrl;
     return {
-        dataset: getServicePrefix("dataset", baseUrl),
-        model: getServicePrefix("model", baseUrl),
+        dataset: {
+            baseUrl: datasetBaseUrl,
+            prefix: getServicePrefix("dataset", datasetBaseUrl),
+        },
+        model: {
+            baseUrl: modelBaseUrl,
+            prefix: getServicePrefix("model", modelBaseUrl),
+        },
     };
 }
 
 async function createResource(args, resourceTarget) {
-    const apiPrefixes = await getApiPrefixes();
+    const apiContexts = await getApiContexts();
     const displayName = args.displayName || resourceTarget.resourceName;
     const description = args.description || "";
 
     if (resourceTarget.resourceType === "model") {
+        const context = apiContexts.model;
         const source = normalizeResourceSourceArg(args, resourceTarget.resourceType);
         console.log(`Creating model: ${resourceTarget.resourceName}`);
-        const response = await request(`${apiPrefixes.model}/api/v1/models`, {
+        const response = await request(`${context.prefix}/api/v1/models`, {
             method: "POST",
+            baseUrl: context.baseUrl,
             body: {
                 name: resourceTarget.resourceName,
                 displayName,
@@ -69,10 +80,12 @@ async function createResource(args, resourceTarget) {
         return;
     }
 
+    const context = apiContexts.dataset;
     const source = normalizeResourceSourceArg(args, resourceTarget.resourceType);
     console.log(`Creating dataset: ${resourceTarget.resourceName}`);
-    const response = await request(`${apiPrefixes.dataset}/api/v1/datasets`, {
+    const response = await request(`${context.prefix}/api/v1/datasets`, {
         method: "POST",
+        baseUrl: context.baseUrl,
         body: {
             name: resourceTarget.resourceName,
             displayName,
@@ -89,7 +102,7 @@ async function createResource(args, resourceTarget) {
 }
 
 async function createResourceVersion(args, resourceTarget) {
-    const apiPrefixes = await getApiPrefixes();
+    const apiContexts = await getApiContexts();
     const version = String(args.version || "").trim();
     const baseBranch = String(args.base || args.baseBranch || "").trim();
 
@@ -107,9 +120,11 @@ async function createResourceVersion(args, resourceTarget) {
     });
 
     if (resourceTarget.resourceType === "model") {
+        const context = apiContexts.model;
         console.log(`Creating version ${version} for model ${resourceTarget.resourceName}`);
-        const response = await request(`${apiPrefixes.model}/api/v1/models/${resourceTarget.resourceName}/versions`, {
+        const response = await request(`${context.prefix}/api/v1/models/${resourceTarget.resourceName}/versions`, {
             method: "POST",
+            baseUrl: context.baseUrl,
             body: {
                 branch: version,
                 ...(baseBranch ? { baseBranch } : {}),
@@ -123,10 +138,12 @@ async function createResourceVersion(args, resourceTarget) {
         return;
     }
 
+    const context = apiContexts.dataset;
     const resolvedBaseBranch = baseBranch || "main";
     console.log(`Creating version ${version} for dataset ${resourceTarget.resourceName}`);
-    const response = await request(`${apiPrefixes.dataset}/api/v1/datasets/${resourceTarget.resourceName}/versions`, {
+    const response = await request(`${context.prefix}/api/v1/datasets/${resourceTarget.resourceName}/versions`, {
         method: "POST",
+        baseUrl: context.baseUrl,
         body: {
             newBranch: version,
             baseBranch: resolvedBaseBranch,
