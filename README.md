@@ -131,7 +131,6 @@ mindreon image build --repo myapp --tag v1.0.0 --method dockerfile --dockerfile-
 
 可选参数：
 
-- `--visibility <private|public>`：镜像可见性，不传时使用平台默认值
 - `--remarks <text>`：构建任务备注
 - `--tag-slugs <slug1,slug2>`：构建成功后要注册的 Tag Engine slug，多个值用英文逗号分隔
 
@@ -157,7 +156,7 @@ mindreon image build --repo myapp --tag nginx-latest --method registry_pull --so
 mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image registry.example.com/ns/app:v1 --source-username user --source-password secret
 
 # 设置可见性、备注和 Tag Engine 标签
-mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image docker.io/library/nginx:latest --visibility private --remarks "import nginx" --tag-slugs base,nginx
+mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image docker.io/library/nginx:latest --remarks "import nginx" --tag-slugs base,nginx
 ```
 
 镜像构建说明：
