@@ -2,7 +2,7 @@ import { parseArgs } from "../cli/args.js";
 import { commandExists, runCommand } from "../utils/shell.js";
 import { request, resolveBaseUrl } from "../api/client.js";
 import { loadConfig } from "../cli/config.js";
-import { getServicePrefix } from "../utils/routes.js";
+import { getServicePrefix, resolveServiceBaseUrl } from "../utils/routes.js";
 
 function parseBooleanOption(value, defaultValue) {
     if (value === undefined || value === null || value === "") {
@@ -36,6 +36,69 @@ function formatCommand(args) {
     return args
         .map((arg) => (/\s/.test(arg) ? JSON.stringify(arg) : arg))
         .join(" ");
+}
+
+function getItems(data) {
+    if (Array.isArray(data)) {
+        return data;
+    }
+    if (Array.isArray(data?.items)) {
+        return data.items;
+    }
+    if (Array.isArray(data?.records)) {
+        return data.records;
+    }
+    return [];
+}
+
+function createImageServiceClient(config) {
+    const baseUrl = resolveServiceBaseUrl("image", config) || resolveBaseUrl(config);
+    const prefix = getServicePrefix("image", baseUrl);
+    return { baseUrl, prefix };
+}
+
+async function listImages({ prefix, baseUrl }, path, repo) {
+    const search = encodeURIComponent(repo);
+    const response = await request(`${prefix}${path}?search=${search}&pageNum=1&pageSize=100`, {
+        method: "GET",
+        baseUrl,
+    });
+    return getItems(response?.data || response);
+}
+
+async function imageVersionExists({ prefix, baseUrl }, imageId, tag) {
+    const response = await request(`${prefix}/api/v1/images/${encodeURIComponent(imageId)}/versions`, {
+        method: "GET",
+        baseUrl,
+    });
+    return getItems(response?.data || response).some((version) => version?.tag === tag);
+}
+
+async function runExists(args) {
+    const repo = args.repo || args.repository || "";
+    const tag = args.tag || "";
+    if (!repo) {
+        throw new Error("--repo is required.");
+    }
+    if (!tag) {
+        throw new Error("--tag is required.");
+    }
+
+    const config = await loadConfig();
+    const client = createImageServiceClient(config);
+    for (const path of ["/api/v1/images", "/api/v1/images/public-images"]) {
+        const images = await listImages(client, path, repo);
+        for (const image of images) {
+            if (image?.name === repo && await imageVersionExists(client, image.id, tag)) {
+                console.log(`${repo}:${tag} exists`);
+                return true;
+            }
+        }
+    }
+
+    const error = new Error(`${repo}:${tag} not found`);
+    error.exitCode = 2;
+    throw error;
 }
 
 async function runBuildTask(args) {
@@ -106,11 +169,11 @@ async function runBuildTask(args) {
     }
 
     const config = await loadConfig();
-    const baseUrl = resolveBaseUrl(config);
-    const prefix = getServicePrefix("image", baseUrl);
+    const { baseUrl, prefix } = createImageServiceClient(config);
     const response = await request(`${prefix}/api/v1/images/build-tasks`, {
         method: "POST",
         body,
+        baseUrl,
     });
 
     const task = response?.data || response;
@@ -131,6 +194,10 @@ export async function runImage({ argv }) {
     if (subCommand === "build") {
         const buildArgs = parseArgs(argv.slice(1));
         return runBuildTask(buildArgs);
+    }
+    if (subCommand === "exists") {
+        const existsArgs = parseArgs(argv.slice(1));
+        return runExists(existsArgs);
     }
 
     const implicitCopy = subCommand && subCommand !== "copy";

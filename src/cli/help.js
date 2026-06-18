@@ -141,10 +141,12 @@ export function printImageHelp() {
 Usage: mindreon image <src> <dst> [options]
        mindreon image copy <src> <dst> [options]
        mindreon image copy --from <src> --to <dst> [options]
+       mindreon image exists --repo <repo> --tag <tag>
        mindreon image build --repo <repo> --tag <tag> --method <method> [options]
 
 Commands:
   copy                           Copy an image from src to dst using skopeo
+  exists                         Check whether an image tag already exists in the platform image center
   build                          Create a build task on the Mindreon image service
 
 copy options:
@@ -173,12 +175,17 @@ build options:
     --source-username <user>     Source registry username
     --source-password <password> Source registry password
 
+exists options:
+  --repo <name>                  Target repository name (short name, no project prefix) [required]
+  --tag <tag>                    Target image tag [required]
+
   -h, --help                     Show this help message
 
 Examples:
   mindreon image docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
   mindreon image copy docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
   mindreon image copy --from quay.io/prometheus/prometheus:v2.54.1 --to harbor.example.com/ops/prometheus:v2.54.1
+  mindreon image exists --repo ultralytics --tag tensorboard-8.4.60
   mindreon image build --repo myapp --tag v1.0.0 --method dockerfile --dockerfile-url https://example.com/Dockerfile
   mindreon image build --repo myapp --tag v1.0.0 --method upload --file-url https://example.com/image.tar
   mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image docker.io/library/nginx:latest
