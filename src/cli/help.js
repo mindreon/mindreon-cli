@@ -165,10 +165,10 @@ build options:
   --tag-slugs <slug1,slug2>      Comma-separated Tag Engine slugs to register after build
 
   dockerfile method:
-    --dockerfile-url <url>       URL of the Dockerfile to use for the build
+    --dockerfile-url <url|path>  Dockerfile URL or local file path to use for the build
 
   upload method:
-    --file-url <url>             URL of the uploaded image tar file [required]
+    --file-url <url|path>        Uploaded image tar URL or local file path [required]
 
   registry_pull method:
     --source-image <image>       Source image reference to pull [required]
@@ -186,8 +186,8 @@ Examples:
   mindreon image copy docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
   mindreon image copy --from quay.io/prometheus/prometheus:v2.54.1 --to harbor.example.com/ops/prometheus:v2.54.1
   mindreon image exists --repo ultralytics --tag tensorboard-8.4.60
-  mindreon image build --repo myapp --tag v1.0.0 --method dockerfile --dockerfile-url https://example.com/Dockerfile
-  mindreon image build --repo myapp --tag v1.0.0 --method upload --file-url https://example.com/image.tar
+  mindreon image build --repo myapp --tag v1.0.0 --method dockerfile --dockerfile-url ./Dockerfile
+  mindreon image build --repo myapp --tag v1.0.0 --method upload --file-url ./image.tar
   mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image docker.io/library/nginx:latest
   mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image registry.example.com/ns/app:v1 --source-username user --source-password secret
 `);

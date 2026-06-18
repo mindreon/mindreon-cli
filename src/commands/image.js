@@ -1,8 +1,10 @@
+import path from "node:path";
 import { parseArgs } from "../cli/args.js";
 import { commandExists, runCommand } from "../utils/shell.js";
 import { request, resolveBaseUrl } from "../api/client.js";
 import { loadConfig } from "../cli/config.js";
 import { getServicePrefix, resolveServiceBaseUrl } from "../utils/routes.js";
+import { uploadFileToWorkspace } from "./file.js";
 
 function parseBooleanOption(value, defaultValue) {
     if (value === undefined || value === null || value === "") {
@@ -101,6 +103,22 @@ async function runExists(args) {
     throw error;
 }
 
+function isHttpUrl(value) {
+    return /^https?:\/\//i.test(String(value || ""));
+}
+
+async function resolveBuildFileUrl(value, label) {
+    if (!value || isHttpUrl(value)) {
+        return value;
+    }
+
+    const filePath = String(value);
+    const remotePath = `/builds/${path.basename(filePath)}`;
+    process.stdout.write(`${label} is a local file. Uploading before image build...\n`);
+    const uploaded = await uploadFileToWorkspace(filePath, { remotePath });
+    return uploaded.url;
+}
+
 async function runBuildTask(args) {
     const repo = args.repo || args.repository || "";
     const tag = args.tag || "";
@@ -146,10 +164,10 @@ async function runBuildTask(args) {
     }
 
     if (method === "dockerfile") {
-        const dockerfileUrl = args["dockerfile-url"] || "";
+        const dockerfileUrl = await resolveBuildFileUrl(args["dockerfile-url"] || "", "--dockerfile-url");
         body.dockerfile = { dockerfileUrl };
     } else if (method === "upload") {
-        const fileUrl = args["file-url"] || "";
+        const fileUrl = await resolveBuildFileUrl(args["file-url"] || "", "--file-url");
         if (!fileUrl) {
             throw new Error("--file-url is required when --method is upload.");
         }

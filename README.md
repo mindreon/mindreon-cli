@@ -117,6 +117,55 @@ mindreon image docker.io/library/nginx:latest harbor.example.com/demo/nginx:late
 mindreon image copy --from docker.io/library/nginx:latest --to harbor.example.com/demo/nginx:latest
 ```
 
+镜像构建任务示例：
+
+```bash
+mindreon image build --repo myapp --tag v1.0.0 --method dockerfile --dockerfile-url ./Dockerfile
+```
+
+通用参数：
+
+- `--repo <name>`：目标镜像仓库短名称，不包含项目名前缀，必填
+- `--tag <tag>`：目标镜像 Tag，必填
+- `--method <dockerfile|upload|registry_pull>`：构建方式，必填
+
+可选参数：
+
+- `--visibility <private|public>`：镜像可见性，不传时使用平台默认值
+- `--remarks <text>`：构建任务备注
+- `--tag-slugs <slug1,slug2>`：构建成功后要注册的 Tag Engine slug，多个值用英文逗号分隔
+
+不同构建方式的参数：
+
+- `dockerfile`：使用 `--dockerfile-url <url|path>` 指定 Dockerfile 下载地址或本地文件路径
+- `upload`：使用 `--file-url <url|path>` 指定镜像 tar 下载地址或本地文件路径，必填
+- `registry_pull`：使用 `--source-image <image>` 指定源镜像地址，必填；如果源仓库需要认证，可以额外传 `--source-username <user>` 和 `--source-password <password>`
+
+更多示例：
+
+```bash
+# 直接传本地 Dockerfile，CLI 会自动上传后再创建构建任务
+mindreon image build --repo myapp --tag v1.0.0 --method dockerfile --dockerfile-url ./Dockerfile
+
+# 直接传本地镜像 tar，CLI 会自动上传后再创建构建任务
+mindreon image build --repo myapp --tag v1.0.0 --method upload --file-url ./image.tar
+
+# 从公开镜像仓库拉取源镜像并导入平台镜像仓库
+mindreon image build --repo myapp --tag nginx-latest --method registry_pull --source-image docker.io/library/nginx:latest
+
+# 从需要认证的源镜像仓库拉取镜像
+mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image registry.example.com/ns/app:v1 --source-username user --source-password secret
+
+# 设置可见性、备注和 Tag Engine 标签
+mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image docker.io/library/nginx:latest --visibility private --remarks "import nginx" --tag-slugs base,nginx
+```
+
+镜像构建说明：
+
+- 当 `--dockerfile-url` 或 `--file-url` 传入的是本地文件路径时，CLI 会先自动调用文件上传，再把返回的下载 URL 回填到镜像构建请求中
+- 当传入的是 `http://` 或 `https://` URL 时，CLI 会直接使用该 URL 创建构建任务
+- 如果你有特殊的上传目录或工作区要求，仍然可以先手动执行 `mindreon file upload`，再把输出 URL 传给 `image build`
+
 说明：
 
 - 已安装的依赖会自动跳过
