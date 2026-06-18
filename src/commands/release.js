@@ -93,6 +93,43 @@ function ensureDependencies() {
     }
 }
 
+function gitOutput(args, { cwd, env } = {}) {
+    const res = spawnSync("git", args, {
+        cwd,
+        env,
+        encoding: "utf8",
+    });
+    if (res.status !== 0) {
+        const printable = ["git", ...args].join(" ");
+        const error = new Error(`Command failed (${res.status}): ${printable}`);
+        error.exitCode = res.status || 1;
+        throw error;
+    }
+    return String(res.stdout || "").trim();
+}
+
+function findGithubPushTarget(repoRoot, env) {
+    const raw = gitOutput(["remote", "get-url", "--push", "--all", "origin"], { cwd: repoRoot, env });
+    const urls = raw
+        .split(/\r?\n/)
+        .map((value) => value.trim())
+        .filter(Boolean);
+    const githubUrl = urls.find((url) => /github\.com[:/]/i.test(url));
+
+    if (!githubUrl) {
+        throw new Error("No GitHub push URL found for origin. The release command only pushes to GitHub.");
+    }
+    return githubUrl;
+}
+
+function currentBranch(repoRoot, env) {
+    const branch = gitOutput(["branch", "--show-current"], { cwd: repoRoot, env });
+    if (!branch) {
+        throw new Error("Unable to determine current git branch for release push.");
+    }
+    return branch;
+}
+
 export async function runRelease({ argv = [], env = process.env } = {}) {
     if (hasHelpFlag(argv)) {
         printReleaseHelp();
@@ -146,28 +183,10 @@ export async function runRelease({ argv = [], env = process.env } = {}) {
     });
 
     if (!skipPush) {
-        const pushAttempts = [
-            ["push", "origin", "main"],
-            ["push", "origin", "master"],
-            ["push"],
-        ];
-        let pushed = false;
-        for (const args of pushAttempts) {
-            try {
-                run("git", args, { cwd: repoRoot, env, dryRun });
-                pushed = true;
-                break;
-            } catch (error) {
-                if (dryRun) {
-                    pushed = true;
-                    break;
-                }
-            }
-        }
-        if (!pushed && !dryRun) {
-            throw new Error("Failed to push branch.");
-        }
-        run("git", ["push", "origin", `v${newVersion}`], { cwd: repoRoot, env, dryRun });
+        const githubPushTarget = findGithubPushTarget(repoRoot, env);
+        const branch = currentBranch(repoRoot, env);
+        run("git", ["push", githubPushTarget, `HEAD:${branch}`], { cwd: repoRoot, env, dryRun });
+        run("git", ["push", githubPushTarget, `v${newVersion}`], { cwd: repoRoot, env, dryRun });
     }
 
     if (!skipGithubRelease) {

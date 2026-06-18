@@ -197,6 +197,9 @@ export function printReleaseHelp() {
   process.stdout.write(`
 Usage: mindreon release [patch|minor|major] [options]
 
+Notes:
+  This command is for GitHub-based release flow. It only pushes release commits/tags to the GitHub push URL of origin.
+
 Options:
   --yes                  Skip confirmation prompts
   --dry-run              Print commands without executing them
