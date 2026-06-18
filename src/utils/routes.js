@@ -3,7 +3,7 @@ function normalizeBaseUrl(baseUrl) {
 }
 
 function readServiceBaseUrlOverride(serviceName) {
-    const key = `MINDREON_${serviceName.toUpperCase()}_URL`;
+    const key = `MINDREON_${serviceName.toUpperCase().replace(/-/g, "_")}_URL`;
     const value = process.env[key];
     if (typeof value !== "string") {
         return "";
@@ -25,7 +25,7 @@ function isLikelyInternalBaseUrl(baseUrl) {
 }
 
 function readPrefixOverride(serviceName) {
-    const key = `MINDREON_${serviceName.toUpperCase()}_PREFIX`;
+    const key = `MINDREON_${serviceName.toUpperCase().replace(/-/g, "_")}_PREFIX`;
     const value = process.env[key];
     if (typeof value !== "string") {
         return null;

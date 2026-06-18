@@ -1,9 +1,10 @@
 import fs from "node:fs/promises";
+import { createReadStream } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "../cli/args.js";
 import { resolveBaseUrl } from "../api/client.js";
 import { loadConfig } from "../cli/config.js";
-import { getServicePrefix } from "../utils/routes.js";
+import { getServicePrefix, resolveServiceBaseUrl } from "../utils/routes.js";
 
 function buildTusMeta(pairs) {
     return Object.entries(pairs)
@@ -25,7 +26,7 @@ export async function runFile({ argv }) {
         const remotePath = args["remote-path"] || args.path || `/${path.basename(filePath)}`;
 
         const config = await loadConfig();
-        const baseUrl = resolveBaseUrl(config);
+        const baseUrl = resolveServiceBaseUrl("file-center", config) || resolveBaseUrl(config);
         const prefix = getServicePrefix("file-center", baseUrl);
         const token = process.env.MINDREON_AUTH_TOKEN || config.token || "";
 
@@ -75,7 +76,6 @@ export async function runFile({ argv }) {
         process.stdout.write(`Uploading ${fileName} (${(stat.size / 1024 / 1024).toFixed(1)} MB)...\n`);
 
         // TUS Patch
-        const fileData = await fs.readFile(filePath);
         const patchResp = await fetch(patchUrl, {
             method: "PATCH",
             headers: {
@@ -85,7 +85,8 @@ export async function runFile({ argv }) {
                 "Content-Type": "application/offset+octet-stream",
                 "Content-Length": String(stat.size),
             },
-            body: fileData,
+            body: createReadStream(filePath),
+            duplex: "half",
         });
 
         if (patchResp.status !== 204) {
