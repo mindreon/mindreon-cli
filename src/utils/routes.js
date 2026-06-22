@@ -80,6 +80,9 @@ export function getServicePrefix(serviceName, baseUrl) {
     if (serviceName === "image") {
         return "/isv";
     }
+    if (serviceName === "ai-nexus") {
+        return "/ai-nexus";
+    }
     if (serviceName === "file-center") {
         return "/file-center";
     }

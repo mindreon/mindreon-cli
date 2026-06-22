@@ -9,7 +9,9 @@ import {
     printImageHelp,
     printInstallHelp,
     printLoginHelp,
+    printParameterTemplateHelp,
     printReleaseHelp,
+    printRuntimeConfigHelp,
     printRootHelp,
 } from "./cli/help.js";
 import { runConnect } from "./commands/connect.js";
@@ -22,6 +24,7 @@ import { runRepo } from "./commands/repo.js";
 import { printRepoHelp } from "./commands/repo-help.js";
 import { runRelease } from "./commands/release.js";
 import { runImage } from "./commands/image.js";
+import { runParameterTemplate, runRuntimeConfig } from "./commands/config-center.js";
 
 const argv = process.argv.slice(2);
 
@@ -47,6 +50,8 @@ function printCommandHelp(command) {
     if (command === "repo") return printRepoHelp();
     if (command === "file") return printFileHelp();
     if (command === "image") return printImageHelp();
+    if (command === "runtime-config") return printRuntimeConfigHelp();
+    if (command === "parameter-template") return printParameterTemplateHelp();
     if (command === "release") return printReleaseHelp();
     return printRootHelp();
 }
@@ -126,6 +131,24 @@ try {
             process.exit(0);
         }
         await runImage({ argv: argvWithoutCommand, env: process.env });
+        process.exit(0);
+    }
+
+    if (command === "runtime-config") {
+        if (argvWithoutCommand.length === 0 || hasHelpFlag(argvWithoutCommand)) {
+            printRuntimeConfigHelp();
+            process.exit(0);
+        }
+        await runRuntimeConfig({ argv: argvWithoutCommand, env: process.env });
+        process.exit(0);
+    }
+
+    if (command === "parameter-template") {
+        if (argvWithoutCommand.length === 0 || hasHelpFlag(argvWithoutCommand)) {
+            printParameterTemplateHelp();
+            process.exit(0);
+        }
+        await runParameterTemplate({ argv: argvWithoutCommand, env: process.env });
         process.exit(0);
     }
 

@@ -17,6 +17,10 @@ Commands:
   repo          Local Git/DVC workspace operations
   file          Upload files to the platform file center workspace
   image         Copy or push images between registries
+  runtime-config
+                Check workload runtime config resources
+  parameter-template
+                Check parameter template resources
   release       Maintainer command for CLI versioning and npm release
   help          Show this help message
 
@@ -32,6 +36,7 @@ Example:
   mindreon repo add
   mindreon repo add --threshold 5
   mindreon image copy docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
+  mindreon runtime-config exists --name qwen-sft-default --source preset
 `);
 }
 
@@ -190,6 +195,48 @@ Examples:
   mindreon image build --repo myapp --tag v1.0.0 --method upload --file-url ./image.tar
   mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image docker.io/library/nginx:latest
   mindreon image build --repo myapp --tag v1.0.0 --method registry_pull --source-image registry.example.com/ns/app:v1 --source-username user --source-password secret
+`);
+}
+
+export function printRuntimeConfigHelp() {
+  process.stdout.write(`
+Usage: mindreon runtime-config exists --name <name> [options]
+
+Commands:
+  exists                         Check whether a runtime config already exists
+
+Options:
+  --name <name>                  Runtime config name [required]
+  --source <custom|preset>       Optional source filter
+  -h, --help                     Show this help message
+
+Exit codes:
+  0                              Resource exists
+  2                              Resource does not exist
+
+Examples:
+  mindreon runtime-config exists --name qwen-sft-default --source preset
+`);
+}
+
+export function printParameterTemplateHelp() {
+  process.stdout.write(`
+Usage: mindreon parameter-template exists --name <name> [options]
+
+Commands:
+  exists                         Check whether a parameter template already exists
+
+Options:
+  --name <name>                  Parameter template name [required]
+  --source <custom|preset>       Optional source filter
+  -h, --help                     Show this help message
+
+Exit codes:
+  0                              Resource exists
+  2                              Resource does not exist
+
+Examples:
+  mindreon parameter-template exists --name qwen-lora-default --source preset
 `);
 }
 
