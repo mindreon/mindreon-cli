@@ -104,3 +104,10 @@ datasets:
     assert.equal(cfg.datasets.length, 1);
     assert.equal(cfg.datasets[0].name, "seed-dataset");
 });
+
+test("prepare uses stable hidden temp path next to target", () => {
+    assert.equal(
+        __test.prepareTempPath("/resources/models/Qwen2.5-7B-Instruct"),
+        "/resources/models/.Qwen2.5-7B-Instruct.prepare"
+    );
+});

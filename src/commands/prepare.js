@@ -86,6 +86,10 @@ async function hasEntries(targetPath) {
     }
 }
 
+function prepareTempPath(targetPath) {
+    return path.join(path.dirname(targetPath), `.${path.basename(targetPath)}.prepare`);
+}
+
 function resolvePrepareTargetPath(resourcesDir, resourceType, item) {
     if (item.prepare?.targetPath) {
         return absPath(resourcesDir, item.prepare.targetPath);
@@ -159,24 +163,23 @@ async function prepareResource(resourcesDir, resourceType, item, { dryRun }) {
         console.log(`skip prepare ${resourceType} ${name}: target path already has content: ${targetPath}`);
         return;
     }
-    const prepareCmd = buildPrepareCommand(resourceType, item.prepare, targetPath);
+    const tempPath = prepareTempPath(targetPath);
+    const prepareCmd = buildPrepareCommand(resourceType, item.prepare, tempPath);
     if (dryRun) {
         console.log(`[dry-run] prepare ${resourceType} ${name}: ${prepareCmd.command} ${prepareCmd.args.join(" ")}`);
         return;
     }
 
     await fs.mkdir(path.dirname(targetPath), { recursive: true });
-    const tempPath = await fs.mkdtemp(path.join(path.dirname(targetPath), `.${path.basename(targetPath)}.prepare-`));
-    const command = buildPrepareCommand(resourceType, item.prepare, tempPath);
+    await fs.mkdir(tempPath, { recursive: true });
     try {
-        console.log(`run prepare command: ${command.command} ${command.args.join(" ")}`);
-        runCommand(command.command, command.args);
+        console.log(`run prepare command: ${prepareCmd.command} ${prepareCmd.args.join(" ")}`);
+        runCommand(prepareCmd.command, prepareCmd.args);
         if (!(await hasEntries(tempPath))) {
             throw new Error(`prepared resource is empty: ${tempPath}`);
         }
         await replaceEmptyTarget(tempPath, targetPath);
     } catch (error) {
-        await fs.rm(tempPath, { recursive: true, force: true });
         throw error;
     }
 }
@@ -202,5 +205,6 @@ export async function runPrepare({ argv }) {
 export const __test = {
     buildPrepareCommand,
     loadPrepareConfig,
+    prepareTempPath,
     resolvePrepareTargetPath,
 };
