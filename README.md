@@ -437,7 +437,17 @@ mindreon connect --model "qwen35-9b-sync" --version "main"
 cd ./qwen35-9b-sync
 mindreon repo pull
 
-modelscope download --model Qwen/Qwen3.5-9B --local_dir ./model_dir
+cat > ./prepare.yaml <<'EOF'
+resourcesDir: .
+models:
+  - name: qwen35-9b-sync
+    path: model_dir
+    prepare:
+      source: modelscope
+      type: model
+      id: Qwen/Qwen3.5-9B
+EOF
+mindreon prepare --config ./prepare.yaml
 
 mindreon repo add
 mindreon repo commit -m "sync Qwen/Qwen3.5-9B from ModelScope"
@@ -454,7 +464,17 @@ mindreon connect --model "qwen35-9b-hf-sync" --version "main"
 cd ./qwen35-9b-hf-sync
 mindreon repo pull
 
-huggingface-cli download Qwen/Qwen3.5-9B --local-dir ./model_dir
+cat > ./prepare.yaml <<'EOF'
+resourcesDir: .
+models:
+  - name: qwen35-9b-hf-sync
+    path: model_dir
+    prepare:
+      source: huggingface
+      type: model
+      id: Qwen/Qwen3.5-9B
+EOF
+mindreon prepare --config ./prepare.yaml
 
 mindreon repo add
 mindreon repo commit -m "sync Qwen/Qwen3.5-9B from Hugging Face"
@@ -464,8 +484,8 @@ mindreon repo push
 说明：
 
 - `mindreon repo pull` 这一步用于完成本地仓库初始化，确保后续下载的模型文件直接落在当前 Mindreon 工作区内
-- `modelscope download` 需要你本地已经安装 `modelscope`
-- `huggingface-cli download` 需要你本地已经安装 `huggingface-cli`；如果是私有模型，先执行 `huggingface-cli login`
+- `mindreon prepare` 会读取 YAML 里的 `models` / `datasets` 和 `prepare` 配置，并调用 `modelscope` 或 `hf` 下载资源
+- 使用 ModelScope 时需要本地已经安装 `modelscope`；使用 Hugging Face 时需要本地已经安装 `hf` 或 `huggingface-cli`
 - 下载完成后，继续执行 `repo add / repo commit / repo push` 即可把模型文件同步到 Mindreon
 
 ## 资源创建

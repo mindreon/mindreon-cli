@@ -59,6 +59,14 @@ function hasSkopeo() {
     return commandExists("skopeo");
 }
 
+function hasModelScope() {
+    return commandExists("modelscope");
+}
+
+function hasHuggingFaceCli() {
+    return commandExists("hf") || commandExists("huggingface-cli");
+}
+
 function getInstallPrefix() {
     const uid = typeof process.getuid === "function" ? process.getuid() : null;
     if (uid === 0 || process.platform === "darwin") {
@@ -133,6 +141,8 @@ function getStatusRows() {
         { name: "python3", installed: hasPython3(), optional: false },
         { name: "python3-pip", installed: hasPipForPython3(), optional: false },
         { name: "dvc", installed: hasDvc(), optional: false },
+        { name: "modelscope", installed: hasModelScope(), optional: true },
+        { name: "huggingface-cli", installed: hasHuggingFaceCli(), optional: true },
         { name: "skopeo", installed: hasSkopeo(), optional: true },
     ];
 }

@@ -23,7 +23,7 @@ RUN sed -i \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git lfs install --system
-RUN python3 -m pip install --break-system-packages "dvc[s3]"
+RUN python3 -m pip install --break-system-packages "dvc[s3]" modelscope "huggingface_hub[cli]"
 
 WORKDIR /opt/mindreon-cli
 

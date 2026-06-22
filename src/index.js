@@ -10,6 +10,7 @@ import {
     printInstallHelp,
     printLoginHelp,
     printParameterTemplateHelp,
+    printPrepareHelp,
     printReleaseHelp,
     printRuntimeConfigHelp,
     printRootHelp,
@@ -25,6 +26,7 @@ import { printRepoHelp } from "./commands/repo-help.js";
 import { runRelease } from "./commands/release.js";
 import { runImage } from "./commands/image.js";
 import { runParameterTemplate, runRuntimeConfig } from "./commands/config-center.js";
+import { runPrepare } from "./commands/prepare.js";
 
 const argv = process.argv.slice(2);
 
@@ -47,6 +49,7 @@ function printCommandHelp(command) {
     if (command === "create") return printCreateHelp();
     if (command === "connect") return printConnectHelp();
     if (command === "download") return printDownloadHelp();
+    if (command === "prepare") return printPrepareHelp();
     if (command === "repo") return printRepoHelp();
     if (command === "file") return printFileHelp();
     if (command === "image") return printImageHelp();
@@ -104,6 +107,15 @@ try {
             process.exit(0);
         }
         await runDownload({ argv: argvWithoutCommand, env: process.env });
+        process.exit(0);
+    }
+
+    if (command === "prepare") {
+        if (hasHelpFlag(argvWithoutCommand)) {
+            printPrepareHelp();
+            process.exit(0);
+        }
+        await runPrepare({ argv: argvWithoutCommand, env: process.env });
         process.exit(0);
     }
 

@@ -14,6 +14,7 @@ Commands:
   create        Create model or dataset resources and versions
   connect       Initialize a local model or dataset workspace
   download      Create a workspace directory and pull remote content
+  prepare       Prepare model or dataset files from configured seed YAML
   repo          Local Git/DVC workspace operations
   file          Upload files to the platform file center workspace
   image         Copy or push images between registries
@@ -33,10 +34,36 @@ Example:
   mindreon create --model example-model
   mindreon connect --model example-model --version v1
   mindreon download --dataset example-dataset --version main
+  mindreon prepare --config /app/configs/config.yaml --resources-dir /resources
   mindreon repo add
   mindreon repo add --threshold 5
   mindreon image copy docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
   mindreon runtime-config exists --name qwen-sft-default --source preset
+`);
+}
+
+export function printPrepareHelp() {
+  process.stdout.write(`
+Usage: mindreon prepare [options]
+
+Options:
+  -c, --config <file>            Seed config YAML. Defaults to configs/config.yaml
+  --resources-dir <dir>          Resource directory override
+  --dry-run                      Print prepare actions without downloading
+  -h, --help                     Show this help message
+
+Notes:
+  The command reads the same YAML format used by platform-seed:
+  resourcesDir, seedDirs, models, datasets, and each resource's prepare block.
+  It prepares only models and datasets with prepare.source configured.
+
+Supported prepare.source values:
+  modelscope                    Uses: modelscope download
+  huggingface, hf               Uses: hf download
+
+Examples:
+  mindreon prepare --config /app/configs/config.yaml --resources-dir /resources
+  mindreon prepare -c ./config.yaml --dry-run
 `);
 }
 
