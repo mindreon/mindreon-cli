@@ -353,7 +353,7 @@ export async function refreshWorkspaceGitRemote(cwd) {
 
 function syncRemoteBranch(cwd, branch) {
     const targetBranch = normalizeBranch(branch) || detectDefaultBranch(cwd);
-    const fetchResult = tryCommand("git", ["fetch", "origin"], { cwd });
+    const fetchResult = tryCommand("git", ["fetch", "origin"], { cwd, traceCommand: true });
     if (fetchResult.status !== 0 || !remoteBranchExists(cwd, targetBranch)) {
         ensureLocalBranch(cwd, targetBranch);
         return targetBranch;
@@ -361,7 +361,7 @@ function syncRemoteBranch(cwd, branch) {
 
     if (!hasLocalCommits(cwd)) {
         runCommand("git", ["checkout", "-f", "-B", targetBranch, `origin/${targetBranch}`], { cwd });
-        tryCommand("git", ["branch", "--set-upstream-to", `origin/${targetBranch}`, targetBranch], { cwd });
+        tryCommand("git", ["branch", "--set-upstream-to", `origin/${targetBranch}`, targetBranch], { cwd, traceCommand: true });
         return targetBranch;
     }
 
@@ -378,14 +378,14 @@ function syncRemoteBranch(cwd, branch) {
             "-m",
             `Merge remote branch '${targetBranch}' via mindreon connect`,
         ],
-        { cwd }
+        { cwd, traceCommand: true }
     );
     if (mergeResult.status !== 0) {
         throw new Error(
             `Failed to merge remote branch '${targetBranch}'. Resolve conflicts manually before continuing.`
         );
     }
-    tryCommand("git", ["branch", "--set-upstream-to", `origin/${targetBranch}`, targetBranch], { cwd });
+    tryCommand("git", ["branch", "--set-upstream-to", `origin/${targetBranch}`, targetBranch], { cwd, traceCommand: true });
 
     return targetBranch;
 }
@@ -396,7 +396,7 @@ export function syncWorkspaceBranch(cwd, branch = "") {
 
 export async function connectWorkspace({ cwd, bindType, bindName, version }) {
     await fs.mkdir(cwd, { recursive: true });
-    const safeDir = tryCommand("git", ["config", "--global", "--add", "safe.directory", cwd], { cwd });
+    const safeDir = tryCommand("git", ["config", "--global", "--add", "safe.directory", cwd], { cwd, traceCommand: true });
     if (safeDir.error) {
         throw safeDir.error;
     }
