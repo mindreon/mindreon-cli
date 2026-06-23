@@ -497,7 +497,7 @@ mindreon repo push
 ```bash
 mindreon create --model "my-model" --description "demo model"
 mindreon create --model "builtin-qwen" --description "preset model" --preset
-mindreon create version --model "my-model" --version "v1" --base "main"
+mindreon connect --model "my-model" --version "main"
 ```
 
 创建数据集：
@@ -505,10 +505,15 @@ mindreon create version --model "my-model" --version "v1" --base "main"
 ```bash
 mindreon create --dataset "my-dataset"
 mindreon create --dataset "coco8" --description "preset dataset" --preset
-mindreon create version --dataset "my-dataset" --version "v1" --base "main"
+mindreon connect --dataset "my-dataset" --version "main"
 ```
 
-不传 `--preset` 时，CLI 默认按 `source=custom` 创建资源；`--preset` 等价于 `--source preset`。
+不传 `--preset` 时，CLI 默认按 `source=custom` 创建资源；`--preset` 等价于 `--source preset`。资源创建后会先有 `main` 版本元数据，但远端 Git 分支可能要等第一次 `repo push` 才实际出现。创建 `v1` 这类新版本前，先在 `main` 完成一次 `repo add / repo commit / repo push`，再执行：
+
+```bash
+mindreon create version --model "my-model" --version "v1" --base "main"
+mindreon create version --dataset "my-dataset" --version "v1" --base "main"
+```
 
 ## 其他命令
 

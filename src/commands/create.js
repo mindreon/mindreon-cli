@@ -75,8 +75,8 @@ async function createResource(args, resourceTarget) {
         console.log("Model created successfully.");
         console.log(response.data || response);
         console.log("Next steps:");
-        console.log(`  mindreon create version --model "${resourceTarget.resourceName}" --version "main"`);
         console.log(`  mindreon connect --model "${resourceTarget.resourceName}" --version "main"`);
+        console.log("  # add files, then run: mindreon repo add && mindreon repo commit -m \"initial import\" && mindreon repo push");
         return;
     }
 
@@ -97,8 +97,8 @@ async function createResource(args, resourceTarget) {
     console.log("Dataset created successfully.");
     console.log(response.data || response);
     console.log("Next steps:");
-    console.log(`  mindreon create version --dataset "${resourceTarget.resourceName}" --version "main" --base "main"`);
     console.log(`  mindreon connect --dataset "${resourceTarget.resourceName}" --version "main"`);
+    console.log("  # add files, then run: mindreon repo add && mindreon repo commit -m \"initial import\" && mindreon repo push");
 }
 
 async function createResourceVersion(args, resourceTarget) {
@@ -118,6 +118,13 @@ async function createResourceVersion(args, resourceTarget) {
     await waitForRepoReady(fvsId, {
         label: `${resourceTarget.resourceType} '${resourceTarget.resourceName}'`,
     });
+
+    if (version === "main") {
+        console.log(`${resourceTarget.resourceType} ${resourceTarget.resourceName} already has initial version "main".`);
+        console.log("Next steps:");
+        console.log(`  mindreon connect --${resourceTarget.resourceType} "${resourceTarget.resourceName}" --version "main"`);
+        return;
+    }
 
     if (resourceTarget.resourceType === "model") {
         const context = apiContexts.model;

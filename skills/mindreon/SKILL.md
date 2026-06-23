@@ -36,6 +36,8 @@ mindreon create --model "builtin-qwen" --description "Preset model" --preset
 ```
 创建版本（branch）：
 ```bash
+mindreon connect --model "my-cool-model" --version "main"
+# 首次 repo add / repo commit / repo push 后，再创建派生版本
 mindreon create version --model "my-cool-model" --version "v1.0.0" --base "main"
 ```
 连接本地目录到模型版本：
@@ -49,6 +51,8 @@ mindreon connect --model "my-cool-model" --version "v1.0.0"
 ```bash
 mindreon create --dataset "my-test-data"
 mindreon create --dataset "coco8" --description "Preset dataset" --preset
+mindreon connect --dataset "my-test-data" --version "main"
+# 首次 repo add / repo commit / repo push 后，再创建派生版本
 mindreon create version --dataset "my-test-data" --version "v1" --base "main"
 cd /path/to/workspace
 mindreon connect --dataset "my-test-data" --version "v1"

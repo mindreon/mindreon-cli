@@ -33,6 +33,19 @@ async function withCapturedCreateRequest(env, argv) {
 
     globalThis.fetch = async (url, options) => {
         calls.push({ url: String(url), options });
+        const rawUrl = String(url);
+        if (rawUrl.includes("/api/v1/fvs/lookup")) {
+            return new Response(JSON.stringify({ code: 0, msg: "success", data: { id: "fvs-1" } }), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            });
+        }
+        if (rawUrl.includes("/api/v1/fvs/fvs-1")) {
+            return new Response(JSON.stringify({ code: 0, msg: "success", data: { id: "fvs-1", repoStatus: "ready" } }), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            });
+        }
         return new Response(JSON.stringify({ code: 0, msg: "success", data: { ok: true } }), {
             status: 200,
             headers: { "content-type": "application/json" },
@@ -94,4 +107,13 @@ test("create dataset 配置内网服务地址时直连 datacube-service", async 
     );
 
     assert.equal(calls[0].url, "http://datacube-service.default.svc.cluster.local/api/v1/datasets");
+});
+
+test("create version main 作为初始版本幂等处理", async () => {
+    const calls = await withCapturedCreateRequest({}, ["version", "--model", "demo-model", "--version", "main"]);
+
+    assert.equal(calls.length, 2);
+    assert.match(calls[0].url, /\/api\/v1\/fvs\/lookup\?/);
+    assert.match(calls[1].url, /\/api\/v1\/fvs\/fvs-1$/);
+    assert.equal(calls.some((call) => call.url.includes("/api/v1/models/demo-model/versions")), false);
 });
