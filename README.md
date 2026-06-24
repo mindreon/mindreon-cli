@@ -427,6 +427,28 @@ mindreon repo push
 
 如果你要把其他模型仓库的内容同步到 Mindreon，可以先在平台上创建模型，再拉取空工作区完成初始化，然后把外部模型文件下载进当前仓库并提交。
 
+### 平台种子资源准备和上传
+
+`mindreon seed` 可以读取和 `platform-seed` 相同格式的 YAML。运维可以在任意环境里先准备资源，再上传平台预置资源：
+
+```bash
+mindreon seed apply --config ./config.yaml --resources-dir /resources
+mindreon seed prepare --config ./config.yaml --resources-dir /resources
+mindreon seed upload --config ./config.yaml --resources-dir /resources
+```
+
+`seed apply` 会先执行 `seed prepare`，再执行 `seed upload`，适合有外网且希望一次完成的环境。即使 `prepare` 中部分资源失败，也会继续执行 `upload`。命令结束时会输出资源级汇总表，列出每个资源的阶段、类型、名称、状态和原因；只要有资源失败，命令最终返回非 0。
+
+`seed prepare` 只处理 `models` / `datasets` 的 `prepare` 配置，把模型或数据集文件下载到资源目录。
+
+`seed upload` 会导入以下资源：
+
+- 模型、数据集：按 `source=preset` 创建资源，连接资源目录作为 workspace，并执行 `repo add/commit/push`。
+- 镜像：按 `images` 配置调用 image service 创建构建任务。
+- 运行配置、参数模板：按 `runtimeConfigs` / `parameterTemplates` 写入 ai-nexus，并标记 `source=preset`。
+
+如果配置里有 `authUsername` / `authPassword`，或环境变量里有 `MINDREON_AUTH_USERNAME` / `MINDREON_AUTH_PASSWORD`，`seed apply` / `seed upload` 会先执行非交互登录。
+
 例如同步魔搭社区模型：
 
 ```bash
@@ -447,7 +469,7 @@ models:
       type: model
       id: Qwen/Qwen3.5-9B
 EOF
-mindreon prepare --config ./prepare.yaml
+mindreon seed prepare --config ./prepare.yaml
 
 mindreon repo add
 mindreon repo commit -m "sync Qwen/Qwen3.5-9B from ModelScope"
@@ -474,7 +496,7 @@ models:
       type: model
       id: Qwen/Qwen3.5-9B
 EOF
-mindreon prepare --config ./prepare.yaml
+mindreon seed prepare --config ./prepare.yaml
 
 mindreon repo add
 mindreon repo commit -m "sync Qwen/Qwen3.5-9B from Hugging Face"
@@ -484,7 +506,7 @@ mindreon repo push
 说明：
 
 - `mindreon repo pull` 这一步用于完成本地仓库初始化，确保后续下载的模型文件直接落在当前 Mindreon 工作区内
-- `mindreon prepare` 会读取 YAML 里的 `models` / `datasets` 和 `prepare` 配置，并调用 `modelscope` 或 `hf` 下载资源
+- `mindreon seed prepare` 会读取 YAML 里的 `models` / `datasets` 和 `prepare` 配置，并调用 `modelscope` 或 `hf` 下载资源
 - 使用 ModelScope 时需要本地已经安装 `modelscope`；使用 Hugging Face 时需要本地已经安装 `hf` 或 `huggingface-cli`
 - 下载完成后，继续执行 `repo add / repo commit / repo push` 即可把模型文件同步到 Mindreon
 

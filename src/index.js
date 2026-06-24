@@ -10,10 +10,10 @@ import {
     printInstallHelp,
     printLoginHelp,
     printParameterTemplateHelp,
-    printPrepareHelp,
     printReleaseHelp,
     printRuntimeConfigHelp,
     printRootHelp,
+    printSeedHelp,
 } from "./cli/help.js";
 import { runConnect } from "./commands/connect.js";
 import { runCreate } from "./commands/create.js";
@@ -26,7 +26,7 @@ import { printRepoHelp } from "./commands/repo-help.js";
 import { runRelease } from "./commands/release.js";
 import { runImage } from "./commands/image.js";
 import { runParameterTemplate, runRuntimeConfig } from "./commands/config-center.js";
-import { runPrepare } from "./commands/prepare.js";
+import { runSeed } from "./commands/seed.js";
 
 const argv = process.argv.slice(2);
 
@@ -49,7 +49,7 @@ function printCommandHelp(command) {
     if (command === "create") return printCreateHelp();
     if (command === "connect") return printConnectHelp();
     if (command === "download") return printDownloadHelp();
-    if (command === "prepare") return printPrepareHelp();
+    if (command === "seed") return printSeedHelp();
     if (command === "repo") return printRepoHelp();
     if (command === "file") return printFileHelp();
     if (command === "image") return printImageHelp();
@@ -110,12 +110,12 @@ try {
         process.exit(0);
     }
 
-    if (command === "prepare") {
-        if (hasHelpFlag(argvWithoutCommand)) {
-            printPrepareHelp();
+    if (command === "seed") {
+        if (argvWithoutCommand.length === 0 || hasHelpFlag(argvWithoutCommand)) {
+            printSeedHelp();
             process.exit(0);
         }
-        await runPrepare({ argv: argvWithoutCommand, env: process.env });
+        await runSeed({ argv: argvWithoutCommand, env: process.env });
         process.exit(0);
     }
 

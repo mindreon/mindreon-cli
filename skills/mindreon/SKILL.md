@@ -72,13 +72,28 @@ mindreon repo push
 mindreon repo add --threshold 10 --count-threshold 5000
 ```
 
+### 5. 平台种子资源 (Seed Resources)
+准备并上传：
+```bash
+mindreon seed apply --config ./config.yaml --resources-dir /resources
+```
+准备模型、数据集文件：
+```bash
+mindreon seed prepare --config ./config.yaml --resources-dir /resources
+```
+上传平台预置资源：
+```bash
+mindreon seed upload --config ./config.yaml --resources-dir /resources
+```
+`seed apply` 会先 prepare 再 upload。`seed upload` 会导入 models、datasets、images、runtimeConfigs、parameterTemplates。seed 命令结束时会输出资源级汇总表，列出成功、跳过、失败以及原因。
+
 如果需要把镜像从一个仓库推到另一个仓库：
 ```bash
 mindreon image <SRC_IMAGE> <DST_IMAGE>
 mindreon image copy --from <SRC_IMAGE> --to <DST_IMAGE>
 ```
 
-### 5. 任务调度 (Workload: AI Nexus)
+### 6. 任务调度 (Workload: AI Nexus)
 启动推理服务：
 ```bash
 mindreon workload create-infer --name "infer-test" --model "my-cool-model" --modelVersion "v1.0.0" --cpu 4 --memory "8G" --gpu 1

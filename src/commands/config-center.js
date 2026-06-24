@@ -42,12 +42,38 @@ async function existsConfigCenterResource(kind, args) {
     throw error;
 }
 
+function apiPathForKind(kind) {
+    if (kind === "runtime-config") return "/api/v1/runtime-configs";
+    if (kind === "parameter-template") return "/api/v1/parameter-templates";
+    throw new Error(`Unsupported config center resource kind: ${kind}`);
+}
+
+export async function createConfigCenterResource(kind, body) {
+    const name = String(body?.name || "").trim();
+    if (!name) {
+        throw new Error(`${kind} name is required.`);
+    }
+    const config = await loadConfig();
+    const { baseUrl, prefix } = createAiNexusClient(config);
+    const response = await request(`${prefix}${apiPathForKind(kind)}`, {
+        method: "POST",
+        baseUrl,
+        body,
+    });
+    console.log(`${kind} ${name} created`);
+    return response?.data || response;
+}
+
 export async function runRuntimeConfig({ argv }) {
     const args = parseArgs(argv);
     const subCommand = args._[0] || "";
 
     if (subCommand === "exists") {
         return existsConfigCenterResource("runtime-config", parseArgs(argv.slice(1)));
+    }
+    if (subCommand === "create") {
+        const body = JSON.parse(String(parseArgs(argv.slice(1)).body || "{}"));
+        return createConfigCenterResource("runtime-config", body);
     }
 
     throw new Error(`Unknown runtime-config command: ${subCommand}`);
@@ -59,6 +85,10 @@ export async function runParameterTemplate({ argv }) {
 
     if (subCommand === "exists") {
         return existsConfigCenterResource("parameter-template", parseArgs(argv.slice(1)));
+    }
+    if (subCommand === "create") {
+        const body = JSON.parse(String(parseArgs(argv.slice(1)).body || "{}"));
+        return createConfigCenterResource("parameter-template", body);
     }
 
     throw new Error(`Unknown parameter-template command: ${subCommand}`);

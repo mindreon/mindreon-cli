@@ -14,7 +14,7 @@ Commands:
   create        Create model or dataset resources and versions
   connect       Initialize a local model or dataset workspace
   download      Create a workspace directory and pull remote content
-  prepare       Prepare model or dataset files from configured seed YAML
+  seed          Prepare or upload platform seed resources from YAML
   repo          Local Git/DVC workspace operations
   file          Upload files to the platform file center workspace
   image         Copy or push images between registries
@@ -34,7 +34,8 @@ Example:
   mindreon create --model example-model
   mindreon connect --model example-model --version v1
   mindreon download --dataset example-dataset --version main
-  mindreon prepare --config /app/configs/config.yaml --resources-dir /resources
+  mindreon seed apply --config /app/configs/config.yaml --resources-dir /resources
+  mindreon seed upload --config /app/configs/config.yaml --resources-dir /resources
   mindreon repo add
   mindreon repo add --threshold 5
   mindreon image copy docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
@@ -42,28 +43,33 @@ Example:
 `);
 }
 
-export function printPrepareHelp() {
+export function printSeedHelp() {
   process.stdout.write(`
-Usage: mindreon prepare [options]
+Usage: mindreon seed <command> [options]
+
+Commands:
+  apply                         Prepare files and upload seed resources
+  prepare                       Prepare model and dataset files from configured seed YAML
+  upload                        Upload seed resources to Mindreon
 
 Options:
   -c, --config <file>            Seed config YAML. Defaults to configs/config.yaml
   --resources-dir <dir>          Resource directory override
-  --dry-run                      Print prepare actions without downloading
+  --dry-run                      Print actions without executing them
   -h, --help                     Show this help message
 
 Notes:
-  The command reads the same YAML format used by platform-seed:
-  resourcesDir, seedDirs, models, datasets, and each resource's prepare block.
-  It prepares only models and datasets with prepare.source configured.
-
-Supported prepare.source values:
-  modelscope                    Uses: modelscope download
-  huggingface, hf               Uses: hf download
+  seed prepare reads models/datasets prepare blocks and downloads files.
+  seed upload imports models, datasets, images, runtime configs, and parameter templates.
+  seed apply runs prepare first, then upload. Upload still runs if prepare has item failures.
+  Seed commands print a per-resource summary table with success, skipped, and failed rows.
+  MINDREON_AUTH_USERNAME and MINDREON_AUTH_PASSWORD are used for non-interactive login when set.
 
 Examples:
-  mindreon prepare --config /app/configs/config.yaml --resources-dir /resources
-  mindreon prepare -c ./config.yaml --dry-run
+  mindreon seed apply --config /app/configs/config.yaml --resources-dir /resources
+  mindreon seed prepare --config /app/configs/config.yaml --resources-dir /resources
+  mindreon seed upload --config /app/configs/config.yaml --resources-dir /resources
+  mindreon seed apply -c ./config.yaml --dry-run
 `);
 }
 
@@ -227,14 +233,16 @@ Examples:
 
 export function printRuntimeConfigHelp() {
   process.stdout.write(`
-Usage: mindreon runtime-config exists --name <name> [options]
+Usage: mindreon runtime-config <command> [options]
 
 Commands:
   exists                         Check whether a runtime config already exists
+  create                         Create a runtime config from JSON body
 
 Options:
   --name <name>                  Runtime config name [required]
   --source <custom|preset>       Optional source filter
+  --body <json>                  JSON body for create
   -h, --help                     Show this help message
 
 Exit codes:
@@ -248,14 +256,16 @@ Examples:
 
 export function printParameterTemplateHelp() {
   process.stdout.write(`
-Usage: mindreon parameter-template exists --name <name> [options]
+Usage: mindreon parameter-template <command> [options]
 
 Commands:
   exists                         Check whether a parameter template already exists
+  create                         Create a parameter template from JSON body
 
 Options:
   --name <name>                  Parameter template name [required]
   --source <custom|preset>       Optional source filter
+  --body <json>                  JSON body for create
   -h, --help                     Show this help message
 
 Exit codes:
