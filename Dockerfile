@@ -48,7 +48,7 @@ RUN mindreon install --check && \
 
 RUN mkdir -p /workspace && chown -R node:node /opt/mindreon-cli /workspace
 
-USER node
+USER root
 WORKDIR /workspace
 
 CMD ["mindreon", "--help"]
