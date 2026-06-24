@@ -20,6 +20,7 @@ RUN sed -i \
     openssh-client \
     python3 \
     python3-pip \
+    skopeo \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git lfs install --system
@@ -35,6 +36,15 @@ COPY src ./src
 COPY skills ./skills
 
 RUN npm install -g . --omit=dev
+RUN mindreon install --check && \
+    git --version && \
+    git lfs version && \
+    dvc version && \
+    python3 -m dvc version && \
+    modelscope --version && \
+    hf --version && \
+    command -v huggingface-cli && \
+    skopeo --version
 
 RUN mkdir -p /workspace && chown -R node:node /opt/mindreon-cli /workspace
 
