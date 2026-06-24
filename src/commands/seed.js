@@ -177,14 +177,17 @@ function buildPrepareCommand(resourceType, prepare, targetPath) {
     }
 
     if (source === "modelscope") {
-        if (asArray(prepare.exclude).length > 0) {
-            throw new Error("modelscope prepare does not support exclude");
-        }
         const args = ["download", type === "dataset" ? "--dataset" : "--model", id];
         if (prepare.revision) {
             args.push("--revision", String(prepare.revision).trim());
         }
-        args.push(...cleanList(prepare.include), "--local_dir", targetPath);
+        for (const pattern of cleanList(prepare.include)) {
+            args.push("--include", pattern);
+        }
+        for (const pattern of cleanList(prepare.exclude)) {
+            args.push("--exclude", pattern);
+        }
+        args.push("--local_dir", targetPath);
         return { command: "modelscope", args };
     }
 

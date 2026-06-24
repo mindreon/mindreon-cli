@@ -12,7 +12,7 @@ Commands:
   login         Authenticate with Mindreon IAM service
   install       Install or verify git, git-lfs, and dvc[s3]
   create        Create model or dataset resources and versions
-  connect       Initialize a local model or dataset workspace
+  connect       Initialize a local model, dataset, or workload workspace
   download      Create a workspace directory and pull remote content
   seed          Prepare or upload platform seed resources from YAML
   repo          Local Git/DVC workspace operations
@@ -108,11 +108,12 @@ Examples:
 
 export function printConnectHelp() {
   process.stdout.write(`
-Usage: mindreon connect (--model <name> | --dataset <name>) [options]
+Usage: mindreon connect (--model <name> | --dataset <name> | --workload <name>) [options]
 
 Options:
   --model <name>                 Target model name
   --dataset <name>               Target dataset name
+  --workload <name>              Target workload name
   --version <version>            Branch or version to initialize
   --dir <path>                   Target workspace directory
   -h, --help                     Show this help message
@@ -123,29 +124,39 @@ Notes:
 Examples:
   mindreon connect --model my-model --version main
   mindreon connect --dataset my-dataset --version main
+  mindreon connect --workload dev-demo --version main
   mindreon connect --model my-model --dir ./workspace/model
 `);
 }
 
 export function printDownloadHelp() {
   process.stdout.write(`
-Usage: mindreon download (--model <name> | --dataset <name>) [options]
+Usage: mindreon download (--model <name> | --dataset <name> | --workload <name>) [options]
+       mindreon download --root-dir <dir> [--models <list>] [--datasets <list>] [--workloads <list>]
 
 Options:
   --model <name>                 Target model name
   --dataset <name>               Target dataset name
+  --workload <name>              Target workload name
   --version <version>            Branch or version to download
   --dir <path>                   Target workspace directory
+  --root-dir <path>              Batch download root directory (default: /data/resources)
+  --models <list>                Batch models, format name:branch,name2:branch2
+  --datasets <list>              Batch datasets, format name:branch,name2:branch2
+  --workloads <list>             Batch workloads, format name:branch,name2:branch2
   -h, --help                     Show this help message
 
 Notes:
   download runs the full workflow: create directory, connect workspace, and pull remote content.
   If the target path is an existing Mindreon workspace, the command reuses it and continues pulling remote content.
   If the target path is a non-empty directory but not a Mindreon workspace, the command stops immediately.
+  Batch mode also reads FVC_MODELS, FVC_DATASETS, FVC_WORKLOADS, and FVC_ROOT_DIR.
 
 Examples:
   mindreon download --model my-model --version main
   mindreon download --dataset my-dataset --version main
+  mindreon download --workload dev-demo --version main --dir /home/mindreon/code
+  mindreon download --root-dir /data/resources --models qwen:main,llama:v2 --datasets alpaca:train --workloads dev-demo:main
   mindreon download --model my-model --dir ./workspace/model
 `);
 }
