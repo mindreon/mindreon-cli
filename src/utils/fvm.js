@@ -1,7 +1,7 @@
 import { URL } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 import { loadConfig, saveConfig } from "../cli/config.js";
-import { hasAuthContext, request, resolveAuthToken } from "../api/client.js";
+import { request } from "../api/client.js";
 import { getServicePrefix, resolveServiceBaseUrl, shouldRequestExternalEndpoints } from "./routes.js";
 
 const READY_REPO_STATUSES = new Set(["", "ready"]);
@@ -12,7 +12,7 @@ const DEFAULT_REPO_READY_INTERVAL_MS = 2000;
 export async function getMindreonContext() {
     const config = await loadConfig();
     const fvmBaseUrl = resolveServiceBaseUrl("fvm", config);
-    const token = resolveAuthToken(config);
+    const token = process.env.MINDREON_AUTH_TOKEN || config.token || "";
     const explicitExternal = String(process.env.MINDREON_FVM_EXTERNAL || "").trim().toLowerCase();
     const externalEndpoints =
         explicitExternal === "true" || explicitExternal === "1"
@@ -31,7 +31,7 @@ export async function getMindreonContext() {
 
 export async function ensureLoggedIn() {
     const context = await getMindreonContext();
-    if (!hasAuthContext(context.config)) {
+    if (!context.token) {
         throw new Error("Not logged in. Please run 'mindreon login' first.");
     }
     return context;

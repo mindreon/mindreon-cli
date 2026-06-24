@@ -4,8 +4,7 @@ function normalizeBaseUrl(baseUrl) {
 
 function readServiceBaseUrlOverride(serviceName) {
     const key = `MINDREON_${serviceName.toUpperCase().replace(/-/g, "_")}_URL`;
-    const legacyKey = serviceName === "fvm" ? "FVM_URL" : "";
-    const value = process.env[key] || (legacyKey ? process.env[legacyKey] : "");
+    const value = process.env[key];
     if (typeof value !== "string") {
         return "";
     }

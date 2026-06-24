@@ -2,57 +2,9 @@ import { loadConfig } from "../cli/config.js";
 import { normalizeResolvedBaseUrl } from "../utils/routes.js";
 
 const DEFAULT_BASE_URL = "https://dev-4-13.mindreon.com";
-const SIGNED_HEADER_ENV_MAP = {
-    FVC_HEADER_X_USER_ID: "X-User-ID",
-    FVC_HEADER_X_USER_NAME: "X-User-Name",
-    FVC_HEADER_X_PROJECT_ID: "X-Project-ID",
-    FVC_HEADER_X_PROJECT_NAME: "X-Project-Name",
-    FVC_HEADER_X_TENANT_ID: "X-Tenant-ID",
-    FVC_HEADER_X_TENANT_NAME: "X-Tenant-Name",
-    FVC_HEADER_X_USER_SIGNATURE: "X-User-Signature",
-    FVC_HEADER_X_USER_TIMESTAMP: "X-User-Timestamp",
-    FVC_HEADER_X_USER_NONCE: "X-User-Nonce",
-    FVC_HEADER_X_AUTH_SIGNATURE: "X-Auth-Signature",
-    FVC_HEADER_X_AUTH_TIMESTAMP: "X-Auth-Timestamp",
-    FVC_HEADER_X_AUTH_NONCE: "X-Auth-Nonce",
-};
-
-function firstNonEmpty(...values) {
-    for (const value of values) {
-        const normalized = String(value || "").trim();
-        if (normalized) return normalized;
-    }
-    return "";
-}
 
 export function resolveBaseUrl(config = {}) {
     return normalizeResolvedBaseUrl(process.env.MINDREON_API_URL || config.url || DEFAULT_BASE_URL);
-}
-
-export function resolveAuthToken(config = {}) {
-    return firstNonEmpty(process.env.MINDREON_AUTH_TOKEN, process.env.FVC_TOKEN, process.env.FVM_TOKEN, config.token);
-}
-
-export function applySignedHeaderEnvs(headers, env = process.env) {
-    for (const [envKey, headerKey] of Object.entries(SIGNED_HEADER_ENV_MAP)) {
-        const value = String(env[envKey] || "").trim();
-        if (value) {
-            headers.set(headerKey, value);
-        }
-    }
-}
-
-export function hasSignedHeaderAuth(env = process.env) {
-    return Boolean(
-        String(env.FVC_HEADER_X_USER_ID || "").trim() &&
-            String(env.FVC_HEADER_X_USER_SIGNATURE || "").trim() &&
-            String(env.FVC_HEADER_X_USER_TIMESTAMP || "").trim() &&
-            String(env.FVC_HEADER_X_USER_NONCE || "").trim()
-    );
-}
-
-export function hasAuthContext(config = {}, env = process.env) {
-    return Boolean(resolveAuthToken(config) || hasSignedHeaderAuth(env));
 }
 
 export async function request(endpoint, options = {}) {
@@ -65,11 +17,10 @@ export async function request(endpoint, options = {}) {
 
     // Load auth token if available unless explicitly disabled
     if (!options.skipAuth) {
-        const token = resolveAuthToken(config);
+        const token = process.env.MINDREON_AUTH_TOKEN || config.token;
         if (token) {
             headers.set("Authorization", `Bearer ${token}`);
         }
-        applySignedHeaderEnvs(headers);
     }
 
     if (options.headers) {
