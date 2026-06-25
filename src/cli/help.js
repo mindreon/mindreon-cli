@@ -14,6 +14,7 @@ Commands:
   create        Create model or dataset resources and versions
   connect       Initialize a local model, dataset, or workload workspace
   download      Create a workspace directory and pull remote content
+  publish       Publish a prepared workspace into a model or dataset version
   seed          Prepare or upload platform seed resources from YAML
   repo          Local Git/DVC workspace operations
   file          Upload files to the platform file center workspace
@@ -34,12 +35,38 @@ Example:
   mindreon create --model example-model
   mindreon connect --model example-model --version v1
   mindreon download --dataset example-dataset --version main
+  mindreon publish --dir ./publish-workspace --model example-model --version main
   mindreon seed apply --config /app/configs/config.yaml --resources-dir /resources
   mindreon seed upload --config /app/configs/config.yaml --resources-dir /resources
   mindreon repo add
   mindreon repo add --threshold 5
   mindreon image copy docker.io/library/nginx:latest harbor.example.com/demo/nginx:latest
   mindreon runtime-config exists --name qwen-sft-default --source preset
+`);
+}
+
+export function printPublishHelp() {
+  process.stdout.write(`
+Usage: mindreon publish --dir <path> (--model <name> | --dataset <name>) [options]
+
+Options:
+  --dir <path>                   Prepared publish workspace directory
+  --model <name>                 Target model name
+  --dataset <name>               Target dataset name
+  --version <version>            Target branch or version (default: main)
+  -b <version>                   Alias for --version
+  --threshold <MiB>              Track files above threshold with DVC (default: 5)
+  -m, --message <message>        Git commit message
+  -h, --help                     Show this help message
+
+Notes:
+  publish connects the provided workspace directory, runs repo add/commit/push,
+  and skips commit/push when there are no changes. Prepare or copy source files
+  into --dir before running this command.
+
+Examples:
+  mindreon publish --dir /tmp/fvc-publish/model --model demo --version main
+  mindreon publish --dir ./dataset-workspace --dataset my-ds -b dev
 `);
 }
 

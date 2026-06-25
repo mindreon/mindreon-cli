@@ -10,6 +10,7 @@ import {
     printInstallHelp,
     printLoginHelp,
     printParameterTemplateHelp,
+    printPublishHelp,
     printReleaseHelp,
     printRuntimeConfigHelp,
     printRootHelp,
@@ -26,6 +27,7 @@ import { printRepoHelp } from "./commands/repo-help.js";
 import { runRelease } from "./commands/release.js";
 import { runImage } from "./commands/image.js";
 import { runParameterTemplate, runRuntimeConfig } from "./commands/config-center.js";
+import { runPublish } from "./commands/publish.js";
 import { runSeed } from "./commands/seed.js";
 
 const argv = process.argv.slice(2);
@@ -49,6 +51,7 @@ function printCommandHelp(command) {
     if (command === "create") return printCreateHelp();
     if (command === "connect") return printConnectHelp();
     if (command === "download") return printDownloadHelp();
+    if (command === "publish") return printPublishHelp();
     if (command === "seed") return printSeedHelp();
     if (command === "repo") return printRepoHelp();
     if (command === "file") return printFileHelp();
@@ -107,6 +110,15 @@ try {
             process.exit(0);
         }
         await runDownload({ argv: argvWithoutCommand, env: process.env });
+        process.exit(0);
+    }
+
+    if (command === "publish") {
+        if (argvWithoutCommand.length === 0 || hasHelpFlag(argvWithoutCommand)) {
+            printPublishHelp();
+            process.exit(0);
+        }
+        await runPublish({ argv: argvWithoutCommand, env: process.env });
         process.exit(0);
     }
 
