@@ -253,8 +253,11 @@ function throwIfFailures(action, results) {
 async function runResourceJobs(stage, jobs) {
     const results = [];
     for (const job of jobs) {
+        const startTime = Date.now();
         try {
             const outcome = (await job.handler()) || {};
+            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+            console.log(`${stage} ${job.type} ${job.name} completed in ${duration}s`);
             results.push({
                 stage,
                 type: job.type,
@@ -263,6 +266,8 @@ async function runResourceJobs(stage, jobs) {
                 reason: outcome.reason || "",
             });
         } catch (error) {
+            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+            console.log(`${stage} ${job.type} ${job.name} failed in ${duration}s`);
             const reason = error.message || String(error);
             console.error(reason);
             results.push({
