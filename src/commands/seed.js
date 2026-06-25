@@ -406,6 +406,40 @@ function createResourceClient(resourceType, config) {
     };
 }
 
+function resourceDetailEndpoint(resourceType, name) {
+    const encodedName = encodeURIComponent(name);
+    return resourceType === "model" ? `/api/v1/models/${encodedName}` : `/api/v1/datasets/${encodedName}`;
+}
+
+async function getResourceDetail(resourceType, name, client) {
+    const response = await request(`${client.prefix}${resourceDetailEndpoint(resourceType, name)}`, {
+        method: "GET",
+        baseUrl: client.baseUrl,
+    });
+    return response?.data || response;
+}
+
+function assertExistingPresetResource(resourceType, name, resource) {
+    const source = String(resource?.source || "").trim();
+    if (source === "preset") {
+        return resource;
+    }
+    if (source) {
+        throw new Error(
+            `${resourceType} ${name} already exists with source ${source}; refusing to upload preset resource into non-preset ${resourceType}`
+        );
+    }
+    throw new Error(`${resourceType} ${name} already exists, but existing resource source is missing`);
+}
+
+function existingResourceSkipReason(resourceType, name, resource) {
+    const source = String(resource?.source || "").trim();
+    if (source) {
+        return `${resourceType} already exists with source ${source}`;
+    }
+    return `${resourceType} already exists`;
+}
+
 async function createPresetResource(resourceType, item) {
     const name = String(item.name || "").trim();
     if (!name) throw new Error(`${resourceType} name is required`);
@@ -427,8 +461,18 @@ async function createPresetResource(resourceType, item) {
         });
     } catch (error) {
         if (isExistsError(error)) {
-            console.log(`skip existing ${resourceType} ${name}`);
-            return null;
+            let existing;
+            try {
+                existing = await getResourceDetail(resourceType, name, client);
+            } catch (lookupError) {
+                throw new Error(
+                    `${resourceType} ${name} already exists, but failed to verify existing resource source: ${lookupError.message || String(lookupError)}`
+                );
+            }
+            assertExistingPresetResource(resourceType, name, existing);
+            const reason = existingResourceSkipReason(resourceType, name, existing);
+            console.log(`skip ${resourceType} ${name}: ${reason}`);
+            return { skipped: true, reason };
         }
         throw error;
     }
@@ -558,7 +602,10 @@ async function uploadResource(cfg, resourceType, item, { dryRun }) {
         }
         throw new Error(`${resourceType} ${name} resource path does not exist: ${sourcePath}`);
     }
-    await createPresetResource(resourceType, item);
+    const created = await createPresetResource(resourceType, item);
+    if (created?.skipped) {
+        return { status: "skipped", reason: created.reason };
+    }
     await createResourceVersion(resourceType, name, version);
     const { workspace, cleanup, materialize, fileName } = await prepareWorkspace(resourceType, name, sourcePath);
     try {
@@ -776,4 +823,6 @@ export const __test = {
     resolvePrepareTargetPath,
     namedBodyBody,
     formatResultsTable,
+    assertExistingPresetResource,
+    existingResourceSkipReason,
 };

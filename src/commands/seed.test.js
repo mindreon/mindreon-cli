@@ -191,3 +191,27 @@ test("seed result table escapes pipes and new lines", () => {
         ].join("\n")
     );
 });
+
+test("assertExistingPresetResource asserts preset source", () => {
+    // Should pass for source: "preset"
+    const validResource = { source: "preset" };
+    assert.equal(__test.assertExistingPresetResource("model", "demo", validResource), validResource);
+
+    // Should throw for source other than "preset"
+    assert.throws(
+        () => __test.assertExistingPresetResource("model", "demo", { source: "custom" }),
+        /model demo already exists with source custom; refusing to upload preset resource into non-preset model/
+    );
+
+    // Should throw for missing source
+    assert.throws(
+        () => __test.assertExistingPresetResource("model", "demo", {}),
+        /model demo already exists, but existing resource source is missing/
+    );
+});
+
+test("existingResourceSkipReason format messages", () => {
+    assert.equal(__test.existingResourceSkipReason("model", "demo", { source: "preset" }), "model already exists with source preset");
+    assert.equal(__test.existingResourceSkipReason("model", "demo", {}), "model already exists");
+});
+
