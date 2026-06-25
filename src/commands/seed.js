@@ -469,7 +469,12 @@ async function createPresetResource(resourceType, item) {
                     `${resourceType} ${name} already exists, but failed to verify existing resource source: ${lookupError.message || String(lookupError)}`
                 );
             }
-            assertExistingPresetResource(resourceType, name, existing);
+            try {
+                assertExistingPresetResource(resourceType, name, existing);
+            } catch (assertError) {
+                console.log(`skip ${resourceType} ${name}: ${assertError.message}`);
+                return { skipped: true, reason: assertError.message };
+            }
             const reason = existingResourceSkipReason(resourceType, name, existing);
             console.log(`skip ${resourceType} ${name}: ${reason}`);
             return { skipped: true, reason };
