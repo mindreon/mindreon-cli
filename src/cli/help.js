@@ -19,6 +19,7 @@ Commands:
   repo          Local Git/DVC workspace operations
   file          Upload files to the platform file center workspace
   image         Copy or push images between registries
+  project       Switch user's current project context
   runtime-config
                 Check workload runtime config resources
   parameter-template
@@ -362,5 +363,18 @@ Notes:
   If automatic install fails, the command prints manual install commands.
   DVC pip install output is streamed live.
   If dvc is installed by pip but not on PATH, Mindreon falls back to python -m dvc.
+`);
+}
+
+export function printProjectHelp() {
+  process.stdout.write(`
+Usage: mindreon project <command> [options]
+
+Commands:
+  list, ls                           List all available projects and display the current active project
+  use, switch <name-or-id>           Switch user's current project context
+
+Options:
+  -h, --help                         Show help information
 `);
 }

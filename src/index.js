@@ -15,6 +15,7 @@ import {
     printRuntimeConfigHelp,
     printRootHelp,
     printSeedHelp,
+    printProjectHelp,
 } from "./cli/help.js";
 import { runConnect } from "./commands/connect.js";
 import { runCreate } from "./commands/create.js";
@@ -29,6 +30,7 @@ import { runImage } from "./commands/image.js";
 import { runParameterTemplate, runRuntimeConfig } from "./commands/config-center.js";
 import { runPublish } from "./commands/publish.js";
 import { runSeed } from "./commands/seed.js";
+import { runProject } from "./commands/project.js";
 
 const argv = process.argv.slice(2);
 
@@ -56,6 +58,7 @@ function printCommandHelp(command) {
     if (command === "repo") return printRepoHelp();
     if (command === "file") return printFileHelp();
     if (command === "image") return printImageHelp();
+    if (command === "project") return printProjectHelp();
     if (command === "runtime-config") return printRuntimeConfigHelp();
     if (command === "parameter-template") return printParameterTemplateHelp();
     if (command === "release") return printReleaseHelp();
@@ -155,6 +158,15 @@ try {
             process.exit(0);
         }
         await runImage({ argv: argvWithoutCommand, env: process.env });
+        process.exit(0);
+    }
+
+    if (command === "project") {
+        if (hasHelpFlag(argvWithoutCommand)) {
+            printProjectHelp();
+            process.exit(0);
+        }
+        await runProject({ argv: argvWithoutCommand, env: process.env });
         process.exit(0);
     }
 
